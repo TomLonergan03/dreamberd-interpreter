@@ -22,6 +22,7 @@ object Eval {
         case Plus(e1, e2)  => Plus(go(e1), go(e2))
         case Minus(e1, e2) => Minus(go(e1), go(e2))
         case Times(e1, e2) => Times(go(e1), go(e2))
+        case Divide(e1, e2) => Divide(go(e1), go(e2))
 
         case Bool(b)               => Bool(b)
         case Eq(e1, e2)            => Eq(go(e1), go(e2))
