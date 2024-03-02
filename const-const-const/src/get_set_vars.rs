@@ -14,6 +14,12 @@ pub fn kv_get_var(key: &str) -> redis::RedisResult<Option<String>> {
     con.get(key)
 }
 
+pub fn kv_get_all_keys() -> redis::RedisResult<Vec<String>> {
+    let mut con = get_redis_connection();
+    let keys: Vec<String> = con.keys("*")?;
+    Ok(keys)
+}
+
 pub fn kv_set_var(key: &str, value: &str) -> redis::RedisResult<()> {
     let mut con = get_redis_connection();
     con.set(key, value)
