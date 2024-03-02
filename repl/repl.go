@@ -9,15 +9,14 @@ import (
 	"strings"
 )
 
-// dbName is the name used in the repl prompts
-var cliName string = "dreamberd"
+var cliName string = "dreamREPL"
 
 // printPrompt displays the repl prompt at the start of each loop
 func printPrompt() {
 	fmt.Print(cliName, "> ")
 }
 
-// printUnkown informs the user about invalid commands
+// printUnknown informs the user about invalid commands
 func printUnknown(text string) {
 	fmt.Println(text, ": command not found")
 }
@@ -31,7 +30,8 @@ func displayHelp() {
 	fmt.Println("help    - Show available commands")
 	fmt.Println("clear   - Clear the terminal screen")
 	fmt.Println("exit    - Closes the terminal")
-	fmt.Println("read(file_path) - Read the file at file_path for Dreamberd interpretation")
+	fmt.Println("read(file_path) - Read the file at file_path for DreamBerd interpretation")
+	fmt.Println("run(code_snippet) - Send code_snippet to the DreamBerd interpreter")
 }
 
 // clearScreen clears the terminal screen
@@ -100,7 +100,7 @@ func main() {
 		} else if strings.HasPrefix(text, "read(") {
 			filePath := strings.TrimPrefix(text, "read(")
 			filePath = strings.TrimSuffix(filePath, ")")
-			readFile(filePath)
+			run(readFile(filePath))
 		} else if strings.HasPrefix(text, "run(") {
 			snippet := strings.TrimPrefix(text, "run(")
 			snippet = strings.TrimSuffix(snippet, ")")
