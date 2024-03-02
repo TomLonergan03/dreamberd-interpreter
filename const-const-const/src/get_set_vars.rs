@@ -1,10 +1,10 @@
+use dotenv::dotenv;
 use redis::Commands;
 
-const REDIS_URL: &str =
-    "rediss://default:49690c6635524252939fd901166ee01c@unified-cicada-37801.upstash.io:37801";
-
 fn get_redis_connection() -> redis::Connection {
-    let client = redis::Client::open(REDIS_URL).unwrap();
+    dotenv().ok();
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let client = redis::Client::open(redis_url).unwrap();
     let con = client.get_connection().unwrap();
     con
 }
