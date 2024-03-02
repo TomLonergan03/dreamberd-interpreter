@@ -1,0 +1,17 @@
+{
+  "name": "typechecker",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "start": "node src/typechecker.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@mistralai/mistralai": "^0.1.3"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
