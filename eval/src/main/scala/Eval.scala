@@ -18,10 +18,10 @@ object Eval {
 
         case Unit => Unit
 
-        case Num(n)        => Num(n)
-        case Plus(e1, e2)  => Plus(go(e1), go(e2))
-        case Minus(e1, e2) => Minus(go(e1), go(e2))
-        case Times(e1, e2) => Times(go(e1), go(e2))
+        case Num(n)         => Num(n)
+        case Plus(e1, e2)   => Plus(go(e1), go(e2))
+        case Minus(e1, e2)  => Minus(go(e1), go(e2))
+        case Times(e1, e2)  => Times(go(e1), go(e2))
         case Divide(e1, e2) => Divide(go(e1), go(e2))
 
         case Bool(b)               => Bool(b)
@@ -63,105 +63,105 @@ object Eval {
       }
       go(e)
 
-      def apply(theta: Subst[Expr], e: Expr): Expr =
-        // BEGIN ANSWER
-        e match {
-          case Num(e)        => Num(e)
-          case Plus(t1, t2)  => Plus(apply(theta, t1), apply(theta, t2))
-          case Minus(t1, t2) => Minus(apply(theta, t1), apply(theta, t2))
-          case Times(t1, t2) => Times(apply(theta, t1), apply(theta, t2))
+    def apply(theta: Subst[Expr], e: Expr): Expr =
+      // BEGIN ANSWER
+      e match {
+        case Num(e)        => Num(e)
+        case Plus(t1, t2)  => Plus(apply(theta, t1), apply(theta, t2))
+        case Minus(t1, t2) => Minus(apply(theta, t1), apply(theta, t2))
+        case Times(t1, t2) => Times(apply(theta, t1), apply(theta, t2))
 
-          // Booleans
-          case Bool(b)    => Bool(b)
-          case Eq(t1, t2) => Eq(apply(theta, t1), apply(theta, t2))
-          case IfThenElse(t0, t1, t2) =>
-            IfThenElse(apply(theta, t0), apply(theta, t1), apply(theta, t2))
+        // Booleans
+        case Bool(b)    => Bool(b)
+        case Eq(t1, t2) => Eq(apply(theta, t1), apply(theta, t2))
+        case IfThenElse(t0, t1, t2) =>
+          IfThenElse(apply(theta, t0), apply(theta, t1), apply(theta, t2))
 
-          // Strings
-          case Str(s)         => Str(s)
-          case Length(t0)     => Length(apply(theta, t0))
-          case Index(t1, t2)  => Index(apply(theta, t1), apply(theta, t2))
-          case Concat(t1, t2) => Concat(apply(theta, t1), apply(theta, t2))
+        // Strings
+        case Str(s)         => Str(s)
+        case Length(t0)     => Length(apply(theta, t0))
+        case Index(t1, t2)  => Index(apply(theta, t1), apply(theta, t2))
+        case Concat(t1, t2) => Concat(apply(theta, t1), apply(theta, t2))
 
-          case Let(y, t1, t2) => {
-            val z = generator.genVar(y);
-            Let(z, apply(theta, t1), apply(theta, swap(t2, y, z)))
-          }
-
-          // Pairs
-          case Pair(t1, t2) => Pair(apply(theta, t1), apply(theta, t2))
-          case First(t0)    => First(apply(theta, t0))
-          case Second(t0)   => Second(apply(theta, t0))
-
-          // Functions
-          case Lambda(x, e) => {
-            val y = generator.genVar(x);
-            Lambda(y, apply(theta, swap(e, x, y)))
-          }
-          case Apply(t1, t2) => Apply(apply(theta, t1), apply(theta, t2))
-          case Rec(f, x, e) => {
-            val g = generator.genVar(f);
-            val y = generator.genVar(x);
-            Rec(g, y, apply(theta, swap(swap(e, f, g), x, y)))
-          }
-
-          // Syntactic sugar
-          case LetPair(y1, y2, t1, t2) => {
-            val y1z = generator.genVar(y1);
-            val y2z = generator.genVar(y2);
-            LetPair(
-              y1z,
-              y2z,
-              apply(theta, t1),
-              apply(theta, swap(swap(t2, y1z, y1), y2z, y2))
-            )
-          }
-
-          case LetFun(f, x, e1, e2) => {
-            val g = generator.genVar(f);
-            val y = generator.genVar(x);
-            LetFun(
-              g,
-              y,
-              apply(theta, swap(swap(e1, f, g), x, y)),
-              apply(theta, swap(e2, f, g))
-            )
-          }
-
-          case LetRec(f, x, e1, e2) => {
-            val g = generator.genVar(f);
-            val y = generator.genVar(x);
-            LetRec(
-              g,
-              y,
-              apply(theta, swap(swap(e1, f, g), x, y)),
-              apply(theta, swap(e2, f, g))
-            )
-          }
-
-          case Var(y) => theta.getOrElse(y, Var(y))
-
-          case Record(es) => Record(es.map((l, t) => (l, apply(theta, t))))
-          case Proj(t, l) => Proj(apply(theta, t), l)
-          case Ref(t)     => Ref(apply(theta, t))
-          case Deref(t)   => Deref(apply(theta, t))
-          case Assign(t1, t2) =>
-            Assign(apply(theta, t1), apply(theta, t2))
-          case Sequ(t1, t2) =>
-            Sequ(apply(theta, t1), apply(theta, t2))
-          case LetRecord(xs, t1, t2) => {
-            val ys = xs.map((l, x) => (l, generator.genVar(x)));
-            val theta1 = theta ++ xs.zip(ys).map((x, y) => (x._2, Var(y._2)));
-            LetRecord(
-              ys,
-              apply(theta, t1),
-              apply(theta1, t2)
-            )
-          }
-          case v: Value => v
-          case Unit     => Unit
-          // END ANSWER
+        case Let(y, t1, t2) => {
+          val z = generator.genVar(y);
+          Let(z, apply(theta, t1), apply(theta, swap(t2, y, z)))
         }
+
+        // Pairs
+        case Pair(t1, t2) => Pair(apply(theta, t1), apply(theta, t2))
+        case First(t0)    => First(apply(theta, t0))
+        case Second(t0)   => Second(apply(theta, t0))
+
+        // Functions
+        case Lambda(x, e) => {
+          val y = generator.genVar(x);
+          Lambda(y, apply(theta, swap(e, x, y)))
+        }
+        case Apply(t1, t2) => Apply(apply(theta, t1), apply(theta, t2))
+        case Rec(f, x, e) => {
+          val g = generator.genVar(f);
+          val y = generator.genVar(x);
+          Rec(g, y, apply(theta, swap(swap(e, f, g), x, y)))
+        }
+
+        // Syntactic sugar
+        case LetPair(y1, y2, t1, t2) => {
+          val y1z = generator.genVar(y1);
+          val y2z = generator.genVar(y2);
+          LetPair(
+            y1z,
+            y2z,
+            apply(theta, t1),
+            apply(theta, swap(swap(t2, y1z, y1), y2z, y2))
+          )
+        }
+
+        case LetFun(f, x, e1, e2) => {
+          val g = generator.genVar(f);
+          val y = generator.genVar(x);
+          LetFun(
+            g,
+            y,
+            apply(theta, swap(swap(e1, f, g), x, y)),
+            apply(theta, swap(e2, f, g))
+          )
+        }
+
+        case LetRec(f, x, e1, e2) => {
+          val g = generator.genVar(f);
+          val y = generator.genVar(x);
+          LetRec(
+            g,
+            y,
+            apply(theta, swap(swap(e1, f, g), x, y)),
+            apply(theta, swap(e2, f, g))
+          )
+        }
+
+        case Var(y) => theta.getOrElse(y, Var(y))
+
+        case Record(es) => Record(es.map((l, t) => (l, apply(theta, t))))
+        case Proj(t, l) => Proj(apply(theta, t), l)
+        case Ref(t)     => Ref(apply(theta, t))
+        case Deref(t)   => Deref(apply(theta, t))
+        case Assign(t1, t2) =>
+          Assign(apply(theta, t1), apply(theta, t2))
+        case Sequ(t1, t2) =>
+          Sequ(apply(theta, t1), apply(theta, t2))
+        case LetRecord(xs, t1, t2) => {
+          val ys = xs.map((l, x) => (l, generator.genVar(x)));
+          val theta1 = theta ++ xs.zip(ys).map((x, y) => (x._2, Var(y._2)));
+          LetRecord(
+            ys,
+            apply(theta, t1),
+            apply(theta1, t2)
+          )
+        }
+        case v: Value => v
+        case Unit     => Unit
+        // END ANSWER
+      }
   }
   import SubstExpr.{subst, ra2AppAssoc, ra2CompAssoc}
 
@@ -261,11 +261,14 @@ object Eval {
     case Lambda(x, e) => FunV(x, e)
     case Rec(f, x, e) => RecV(f, x, e)
     case Unit         => UnitV
-    case _            => sys.error("eval: should have been desugared " + e)
-    // END ANSWER
+    case _ =>
+      sys.error("eval: should have been desugared " + e)
+  }
 
-    type Subst[A] = ListMap[Variable, A]
-    object Subst {
+  // END ANSWER
+
+  type Subst[A] = ListMap[Variable, A]
+  object Subst {
     def empty[A]: Subst[A] = ListMap.empty[Variable, A]
     def apply[A](pairs: (Variable, A)*): Subst[A] = ListMap(pairs: _*)
   }
@@ -301,6 +304,5 @@ object Eval {
       def *:(x: Subst[A]): Subst[A] = comp(x, y)
     }
     implicit def ra2CompAssoc(x: Subst[A]): CompAssoc = new CompAssoc(x)
-    }
   }
 }
