@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
+
+	"github.com/gdamore/tcell"
 )
 
 var cliName string = "dreamREPL"
@@ -23,34 +23,24 @@ func printUnknown(text string) {
 
 // displayHelp informs the user about our hardcoded functions
 func displayHelp() {
-	fmt.Printf(
-		"Welcome to %v! These are the available commands: \n",
-		cliName,
-	)
-	fmt.Println("help    - Show available commands")
-	fmt.Println("clear   - Clear the terminal screen")
-	fmt.Println("exit    - Closes the terminal")
-	fmt.Println("read(file_path) - Read the file at file_path for DreamBerd interpretation")
-	fmt.Println("run(code_snippet) - Send code_snippet to the DreamBerd interpreter")
-}
-
-// clearScreen clears the terminal screen
-func clearScreen() {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-	cmd.Run()
+	fmt.Print("Welcome to ", cliName, "! These are the available commands: \r\n")
+	fmt.Print("help    - Show available commands\r\n")
+	fmt.Print("clear   - Clear the terminal screen\r\n")
+	fmt.Print("exit    - Closes the terminal\r\n")
+	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
+	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
 }
 
 func readFile(filePath string) string {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Print("Error: ", err, "\r\n")
 		return ""
 	}
 	defer file.Close()
 	content, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		fmt.Print("Error: ", err, "\r\n")
 	}
 	str := string(content)
 	fmt.Println(str)
@@ -79,38 +69,103 @@ func cleanInput(text string) string {
 	return output
 }
 
+// TODOLater - Make a better function name
+func handleCommand(screen tcell.Screen, command string) {
+	text := cleanInput(command)
+	if strings.EqualFold("help", text) {
+		displayHelp()
+	} else if strings.EqualFold("clear", text) {
+		// TODOLater - Why does this only work once?
+		screen.Clear()
+		screen.ShowCursor(0, 0)
+		screen.Show()
+		printPrompt()
+	} else if strings.EqualFold("exit", text) {
+		// Close the program on the exit command
+		screen.Fini()
+		os.Exit(0)
+	} else if strings.HasPrefix(text, "read(") {
+		filePath := strings.TrimPrefix(text, "read(")
+		filePath = strings.TrimSuffix(filePath, ")")
+		run(readFile(filePath))
+	} else if strings.HasPrefix(text, "run(") {
+		snippet := strings.TrimPrefix(text, "run(")
+		snippet = strings.TrimSuffix(snippet, ")")
+		run(snippet)
+	} else {
+		// Pass the command to the parser
+		handleCmd(text)
+	}
+}
+
 func main() {
-	// Hardcoded repl commands
-	commands := map[string]interface{}{
-		"help":  displayHelp,
-		"clear": clearScreen,
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		panic(err)
+	}
+	defer screen.Fini()
+
+	if err := screen.Init(); err != nil {
+		panic(err)
 	}
 
-	// Begin the repl loop
-	reader := bufio.NewScanner(os.Stdin)
-	printPrompt()
-	for reader.Scan() {
-		text := cleanInput(reader.Text())
-		if command, exists := commands[text]; exists {
-			// Call a hardcoded function
-			command.(func())()
-		} else if strings.EqualFold("exit", text) {
-			// Close the program on the exit command
-			return
-		} else if strings.HasPrefix(text, "read(") {
-			filePath := strings.TrimPrefix(text, "read(")
-			filePath = strings.TrimSuffix(filePath, ")")
-			run(readFile(filePath))
-		} else if strings.HasPrefix(text, "run(") {
-			snippet := strings.TrimPrefix(text, "run(")
-			snippet = strings.TrimSuffix(snippet, ")")
-			run(snippet)
-		} else {
-			// Pass the command to the parser
-			handleCmd(text)
-		}
-		printPrompt()
+	quit := make(chan struct{})
+
+	var input string = ""
+
+	for {
+		go func() {
+			printPrompt()
+			for {
+				event := screen.PollEvent()
+				switch event := event.(type) {
+				case *tcell.EventKey:
+					if event.Key() == tcell.KeyEnter {
+						if event.Modifiers() == tcell.ModShift {
+							input += "\n"
+							fmt.Print("\n\r")
+						} else {
+							fmt.Print("\n\r")
+							handleCommand(screen, input)
+							input = ""
+							fmt.Print("\r")
+							printPrompt()
+							break
+						}
+					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
+						// TODOLater - Why does this not work?
+						if len(input) > 0 {
+							input = input[:len(input)-1]
+							screen.Clear()
+
+							// Set the default style
+							style := tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack)
+
+							// Display the updated input string
+							for i, char := range input {
+								screen.SetContent(i+1, 1, char, nil, style)
+							}
+							screen.Show()
+						}
+					} else if event.Key() == tcell.KeyCtrlC {
+						screen.Fini()
+						os.Exit(0)
+					} else if event.Key() == tcell.KeyCtrlL {
+						// TODOLater - Why does CTRL+L only work once?
+						screen.Clear()
+						screen.ShowCursor(0, 0)
+						screen.Show()
+						printPrompt()
+					} else {
+						input += string(event.Rune())
+						fmt.Print(string(event.Rune()))
+					}
+				}
+			}
+		}()
+
+		<-quit
+
+		screen.Show()
 	}
-	// Print an additional line if we encountered an EOF character
-	fmt.Println()
 }
