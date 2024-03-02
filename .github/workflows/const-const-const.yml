@@ -1,0 +1,14 @@
+name: Cargo Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build_and_test:
+    name: build const-const-const
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup default stable
+      - run: cargo build --verbose
