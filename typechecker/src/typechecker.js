@@ -15,6 +15,12 @@ async function typecheck(program, spec, client) {
   const result = textRepsonse[0].split('.')[0];
 
   console.log('Chat:', result);
+
+  if (result.toLowerCase() === 'yes') {
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
 }
 
 async function doesHalt(program, spec, client) {
@@ -29,6 +35,12 @@ async function doesHalt(program, spec, client) {
   const result = textRepsonse[0].split('.')[0];
 
   console.log('Chat:', result);
+
+  if (result.toLowerCase() === 'no') {
+    process.exit(0);
+  } else {
+    process.exit(1);
+  }
 }
 
 const apiKey = process.env.MISTRAL_API_KEY || 'your_api_key';
