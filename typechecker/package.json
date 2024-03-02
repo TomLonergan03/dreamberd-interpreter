@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "node src/typechecker.js"
+    "start": "node src/typechecker.js $npm_config_program $npm_config_spec"
   },
   "author": "",
   "license": "ISC",
