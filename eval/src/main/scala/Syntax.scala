@@ -12,6 +12,9 @@ object Syntax {
   type Field[A] = ListMap[Label, A]
   type Clauses = ListMap[(Label, Variable), Expr]
 
+  enum BoolOptions:
+    case True, Maybe, False
+
   class RefCell[A](val x: A) {
     private var a = x
     def get = a
@@ -27,15 +30,16 @@ object Syntax {
   case object Unit extends Expr
 
   // Arithmetic expressions
-  case class Num(n: Integer) extends Expr
+  case class Num(n: Float) extends Expr
   case class Plus(e1: Expr, e2: Expr) extends Expr
   case class Minus(e1: Expr, e2: Expr) extends Expr
   case class Times(e1: Expr, e2: Expr) extends Expr
   case class Divide(e1: Expr, e2: Expr) extends Expr
-
+  
   // Booleans
-  case class Bool(b: Boolean) extends Expr
-  case class Eq(e1: Expr, e2: Expr) extends Expr
+  case class Bool(b: BoolOptions) extends Expr
+  case class OneEquals(e1: Expr, e2: Expr) extends Expr
+  case class ThreeEquals(e1: Expr, e2: Expr) extends Expr
   case class IfThenElse(e: Expr, e1: Expr, e2: Expr) extends Expr
 
   // Strings
@@ -77,8 +81,8 @@ object Syntax {
   // Values
   abstract class Value extends Expr
   case object UnitV extends Value
-  case class NumV(n: Integer) extends Value
-  case class BoolV(b: Boolean) extends Value
+  case class NumV(n: Float) extends Value
+  case class BoolV(b: BoolOptions) extends Value
   case class StringV(s: String) extends Value
   case class PairV(v1: Value, v2: Value) extends Value
   case class RecordV(vs: Field[Value]) extends Value
