@@ -31,6 +31,7 @@ func displayHelp() {
 	fmt.Println("help    - Show available commands")
 	fmt.Println("clear   - Clear the terminal screen")
 	fmt.Println("exit    - Closes the terminal")
+	fmt.Println("read(file_path) - Read the file at file_path for Dreamberd interpretation")
 }
 
 // clearScreen clears the terminal screen
@@ -96,8 +97,8 @@ func main() {
 		} else if strings.EqualFold("exit", text) {
 			// Close the program on the exit command
 			return
-		} else if strings.HasPrefix(text, "load(") {
-			filePath := strings.TrimPrefix(text, "load(")
+		} else if strings.HasPrefix(text, "read(") {
+			filePath := strings.TrimPrefix(text, "read(")
 			filePath = strings.TrimSuffix(filePath, ")")
 			readFile(filePath)
 		} else if strings.HasPrefix(text, "run(") {
