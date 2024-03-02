@@ -8,6 +8,7 @@ jobs:
   build_and_test:
     name: build const-const-const
     runs-on: ubuntu-latest
+    working-directory: const-const-const
     steps:
       - uses: actions/checkout@v3
       - run: rustup default stable
