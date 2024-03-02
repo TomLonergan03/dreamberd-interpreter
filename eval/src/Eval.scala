@@ -262,9 +262,7 @@ object Eval {
     case Unit         => UnitV
     case _            => sys.error("eval: should have been desugared " + e)
     // END ANSWER
-  }
 
-  
     type Subst[A] = ListMap[Variable, A]
     object Subst {
     def empty[A]: Subst[A] = ListMap.empty[Variable, A]
@@ -302,5 +300,6 @@ object Eval {
       def *:(x: Subst[A]): Subst[A] = comp(x, y)
     }
     implicit def ra2CompAssoc(x: Subst[A]): CompAssoc = new CompAssoc(x)
+    }
   }
 }
