@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 async function typecheck(program, spec, client) {
-  let message = "The spec of the programming language is:\n" + spec + " The program is as follows:\n " + program + " \n Is the program correct given the spec? Give a one word answer." 
+  let message = "The spec of the programming language is:\n" + spec + " The program is as follows:\n " + program + " \n Is the program correct given the spec? Give a one word yes or no answer." 
 
   const chatResponse = await client.chat({
     model: 'mistral-tiny',
@@ -16,7 +16,7 @@ async function typecheck(program, spec, client) {
 
   let textRepsonse = chatResponse.choices[0].message.content;
   textRepsonse = textRepsonse.split(' ');
-  const result = textRepsonse[0].split('.')[0];
+  const result = textRepsonse[0].substring(0, textRepsonse[0].length - 1);
 
   console.log('Result: ', result);
 
@@ -38,7 +38,7 @@ async function doesHalt(program, spec, client) {
 
   let textRepsonse = chatResponse.choices[0].message.content;
   textRepsonse = textRepsonse.split(' ');
-  const result = textRepsonse[0].split('.')[0];
+  const result = textRepsonse[0].substring(0, textRepsonse[0].length - 1);
 
   console.log('Result: ', result);
 
