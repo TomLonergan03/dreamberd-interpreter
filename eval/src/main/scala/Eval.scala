@@ -198,7 +198,7 @@ object Eval {
       case _ => sys.error("arguments to multiplication are non-numeric")
 
     def divide(v1: Value, v2: Value): Value = (v1, v2) match
-      case (NumV(v1), NumV(0))  => sys.error("Denominator cannot be 0")
+      case (NumV(v1), NumV(0))  => UndefinedV
       case (NumV(v1), NumV(v2)) => NumV(v1 / v2)
       case _ => sys.error("arguments to multiplication are non-numeric")
 
@@ -312,7 +312,7 @@ object Eval {
   // Evaluation
   // ======================================================================
 
-  def eval(env: Env[Value], deletedKeywords: Set[String], e: Expr): Value =
+  def eval(env: Env[Value], deletedKeywords: Set[String], when: Set[(String, Value, Expr)], e: Expr): Value =
     e match {
       // Value
       case v: Value => v
@@ -322,62 +322,62 @@ object Eval {
           sys.error("The expression '+' has been deleted")
         else
           Value.add(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case Minus(e1, e2) =>
         if (deletedKeywords.contains("-"))
           sys.error("The expression '-' has been deleted")
         else
           Value.subtract(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case Times(e1, e2) =>
         if (deletedKeywords.contains("*"))
           sys.error("The expression '*' has been deleted")
         else
           Value.multiply(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case Divide(e1, e2) =>
         if (deletedKeywords.contains("/"))
           sys.error("The expression '/' has been deleted")
         else
           Value.divide(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case Exponent(e1, e2) =>
         if (deletedKeywords.contains("^"))
           sys.error("The expression '^' has been deleted")
         else
           Value.exponent(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case IfThenElse(e, e1, e2) =>
         if (deletedKeywords.contains("if"))
           sys.error("The expression 'if' has been deleted")
-        else if eval(env, deletedKeywords, e) == BoolV(BoolOptions.True) then
-          eval(env, deletedKeywords, e1)
-        else eval(env, deletedKeywords, e2)
+        else if eval(env, deletedKeywords, when, e) == BoolV(BoolOptions.True) then
+          eval(env, deletedKeywords, when, e1)
+        else eval(env, deletedKeywords, when, e2)
       case OneEquals(e1, e2) =>
         if (deletedKeywords.contains("="))
           sys.error("The expression '=' has been deleted")
         else
           Value.oneEquals(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case TwoEquals(e1, e2) =>
         if (deletedKeywords.contains("=="))
           sys.error("The expression '==' has been deleted")
         else
           Value.twoEquals(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
 
       case ThreeEquals(e1, e2) =>
@@ -385,55 +385,55 @@ object Eval {
           sys.error("The expression '===' has been deleted")
         else
           Value.threeEquals(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
       case FourEquals(e1, e2) =>
         if (deletedKeywords.contains("===="))
           sys.error("The expression '====' has been deleted")
         else
           Value.fourEquals(
-            eval(env, deletedKeywords, e1),
-            eval(env, deletedKeywords, e2)
+            eval(env, deletedKeywords, when, e1),
+            eval(env, deletedKeywords, when, e2)
           )
-      case Length(e) => Value.length(eval(env, deletedKeywords, e))
+      case Length(e) => Value.length(eval(env, deletedKeywords, when, e))
       case Index(e1, e2) =>
         Value.index(
-          eval(env, deletedKeywords, e1),
-          eval(env, deletedKeywords, e2)
+          eval(env, deletedKeywords, when, e1),
+          eval(env, deletedKeywords, when, e2)
         )
       case Concat(e1, e2) =>
         Value.concat(
-          eval(env, deletedKeywords, e1),
-          eval(env, deletedKeywords, e2)
+          eval(env, deletedKeywords, when, e1),
+          eval(env, deletedKeywords, when, e2)
         )
       case Apply(e1, e2) =>
-        val v1 = eval(env, deletedKeywords, e1)
-        val v2 = eval(env, deletedKeywords, e2)
+        val v1 = eval(env, deletedKeywords, when, e1)
+        val v2 = eval(env, deletedKeywords, when, e2)
         v1 match {
-          case FunV(x, e) => eval(env, deletedKeywords, subst(e, v2, x))
+          case FunV(x, e) => eval(env, deletedKeywords, when, subst(e, v2, x))
           case RecV(f, x, e) =>
-            eval(env, deletedKeywords, subst(subst(e, v1, f), v2, x))
+            eval(env, deletedKeywords, when, subst(subst(e, v1, f), v2, x))
           case _ => sys.error("eval: apply e1 not a function")
         }
       case Let(x, e1, e2) =>
-        eval(env, deletedKeywords, subst(e2, eval(env, deletedKeywords, e1), x))
+        eval(env, deletedKeywords, when, subst(e2, eval(env, deletedKeywords, when, e1), x))
       case Pair(e1, e2) =>
-        PairV(eval(env, deletedKeywords, e1), eval(env, deletedKeywords, e2))
+        PairV(eval(env, deletedKeywords, when, e1), eval(env, deletedKeywords, when, e2))
       case First(e) =>
-        eval(env, deletedKeywords, e) match {
+        eval(env, deletedKeywords, when, e) match {
           case PairV(v1, v2) => v1
           case _             => sys.error("eval: First e not a pair")
         }
       case Second(e) =>
-        eval(env, deletedKeywords, e) match {
+        eval(env, deletedKeywords, when, e) match {
           case PairV(v1, v2) => v2
           case _             => sys.error("eval: Second e not a pair")
         }
       case Record(es) =>
-        RecordV(es.map((l, e) => (l, eval(env, deletedKeywords, e))))
+        RecordV(es.map((l, e) => (l, eval(env, deletedKeywords, when, e))))
       case Proj(e, l) =>
-        eval(env, deletedKeywords, e) match {
+        eval(env, deletedKeywords, when, e) match {
           case RecordV(es) => es(l)
           case _           => sys.error("eval: Proj e not a record")
         }
@@ -458,6 +458,25 @@ object Eval {
       case _ =>
         sys.error("eval: should have been desugared " + e)
     }
+  
+  def output(e: Value): Unit = // TODO: fix weird output
+    var env = ListMap.empty[Variable, Value]
+    var deletedKeywords = Set[String]()
+    var when = Set[(String, Value, Expr)]()
+    def stringing (e: Value): String = e match {
+      case NumV(n)       => n.toString
+      case BoolV(b)      => b.toString
+      case StringV(s)    => s
+      case PairV(v1, v2) => "(" + stringing(v1) + ", " + stringing(v2) + ")"
+      case RecordV(es)   => es.toString
+      case FunV(x, e)    => "(" + x + ", " + stringing(eval(env, deletedKeywords, when, e)) + ")"
+      case RecV(f, x, e) => "(" + f + ", " + x + ", " + stringing(eval(env, deletedKeywords, when, e)) + ")"
+      case UndefinedV    => "Undefined"
+      case UnitV         => "()"
+      case _             => sys.error("eval: should have been desugared " + e)
+    }
+    println(stringing(e))
+  // END ANSWER
 
   type Subst[A] = ListMap[Variable, A]
   object Subst {
@@ -501,12 +520,10 @@ object Eval {
 
 @main def test() =
   var env = ListMap.empty[Variable, Value]
-  println(Eval.eval(env, Set[String](), OneEquals(NumV(2.4), NumV(3))))
-  println(
-    Eval.eval(
-      env,
-      Set[String](),
-      TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))
-    )
-  )
-  println(Eval.eval(env, Set[String](), Let("😀😀", Num(3), Num(4))))
+  var deletedKeywords = Set[String]()
+  var when = Set[(String, Value, Expr)]()
+  println(Eval.eval(env, deletedKeywords, when, OneEquals(NumV(2.4), NumV(3))))
+  println(Eval.eval(env, deletedKeywords, when, TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
+  println(Eval.eval(env, deletedKeywords, when, Let("😀😀", PairV(NumV(3), NumV(3)), PairV(NumV(3), NumV(3)))))
+  Eval.output(Eval.eval(env, deletedKeywords, when, PairV(NumV(3), NumV(3))))
+  
