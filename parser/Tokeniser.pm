@@ -140,7 +140,7 @@ sub read_next {
     }
     if ($self->is_punc($char)) {
         return {
-            "type" => 'PUNCTUATION',
+            "type" => 'punctuation',
             "value" => $self->{input}->next()
         };
     }

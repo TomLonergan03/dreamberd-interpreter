@@ -37,23 +37,21 @@ sub is_punctuation {
     my $self = shift;
     my $char = shift;
     my $token = $self->{input}->peek();
-    print Dumper($token);
-    print "$char\n";
-    return $token && $token->{type} eq "punc" && (!$char || $token->{value} eq $char) && $token;
+    return $token && $token->{type} eq "punctuation" && (!$char || $token->{value} eq $char) && $token;
 }
 
 sub is_keyword {
     my $self = shift;
     my $word = shift;
     my $token = $self->{input}->peek();
-    return $token && $token->{type} eq "kw" && (!$word || $token->{value} eq $word) && $token;
+    return $token && $token->{type} eq "keyword" && (!$word || $token->{value} eq $word) && $token;
 }
 
 sub is_operation {
     my $self = shift;
     my $op = shift;
     my $token = $self->{input}->peek();
-    return $token && $token->{type} eq "op" && (!$op || $token->{value} eq $op) && $token;
+    return $token && $token->{type} eq "operator" && (!$op || $token->{value} eq $op) && $token;
 }
 
 sub skip_punctuation {
@@ -97,12 +95,12 @@ sub maybe_binary {
     my $my_precedence = shift;
     my $token = $self->is_operation();
     if ($token) {
-        my $his_precedence = $PRECEDENCE->{$token->value};
+        my $his_precedence = $PRECEDENCE->{$token->{value}};
         if ($his_precedence > $my_precedence) {
             $self->{input}->next();
             return $self->maybe_binary({
-                type => $token->value eq "=" ? "assign" : "binary",
-                operator => $token->value,
+                type => $token->{value} eq "=" ? "assign" : "binary",
+                operator => $token->{value},
                 left => $left,
                 right => $self->maybe_binary($self->parse_atom(), $his_precedence)
             }, $my_precedence);
@@ -196,7 +194,7 @@ sub parse_bool {
 
 sub maybe_call {
     my $self = shift;
-    my $expr = shift;
+    my $expr = shift->();
     $expr = $self->parse_call($expr) if $self->is_punctuation("(");
     return $expr;
 }
@@ -224,7 +222,7 @@ sub parse_atom {
             return $self->parse_lambda();
         }
         my $token = $self->{input}->next();
-        if ($token->type eq "var" || $token->type eq "num" || $token->type eq "str") {
+        if ($token->{type} eq "variable" || $token->{type} eq "number" || $token->{type} eq "string") {
             return $token;
         }
         $self->unexpected();

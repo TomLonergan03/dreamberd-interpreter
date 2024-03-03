@@ -21,4 +21,5 @@ my $input = "5 + 2!";
 my $stream = new InputStream($input);
 my $tokeniser = new Tokeniser($stream);
 my $parser = new Parser($tokeniser);
+print $input . "\n";
 print Dumper($parser->parse_toplevel());
