@@ -46,24 +46,25 @@ async fn get_all_vars() -> impl Responder {
 
 #[derive(Deserialize)]
 struct PostData {
-    key: String,
+    var: String,
     value: String,
 }
 
 #[post("/set")]
 async fn set_var(data: web::Json<PostData>) -> impl Responder {
-    let existing_value = kv_get_var(&data.key).unwrap();
+    let existing_value = kv_get_var(&data.var).unwrap();
     if existing_value.is_some() {
         return HttpResponse::BadRequest().body(format!(
             "const const const {} already exists! (value: {})",
-            &data.key,
+            &data.var,
             existing_value.unwrap()
         ));
     }
-    kv_set_var(&data.key, &data.value).unwrap();
+    println!("Setting {} to {}", &data.var, &data.value);
+    kv_set_var(&data.var, &data.value).unwrap();
     HttpResponse::Ok().body(format!(
         "const const const {} set to {}",
-        &data.key, &data.value
+        &data.var, &data.value
     ))
 }
 
