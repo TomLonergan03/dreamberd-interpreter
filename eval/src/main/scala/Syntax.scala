@@ -26,7 +26,6 @@ object Syntax {
   // ======================================================================
   sealed abstract class Stmt
 
-  // Skip
   case object Skip extends Stmt
   
   case class Delete(k: String) extends Stmt

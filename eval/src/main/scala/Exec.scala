@@ -23,6 +23,9 @@ object Exec {
           case BoolV(BoolOptions.False) => exec(env, deletedKeywords, s2)
           case BoolV(BoolOptions.Maybe) => exec(env, deletedKeywords, s2)
         }
+      case Assign(x, e) =>
+        val v = Eval.eval(env, e)
+        env + (x -> v)
     }
 
 }
