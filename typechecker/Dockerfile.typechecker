@@ -1,0 +1,10 @@
+FROM node:latest
+
+RUN mkdir /home/typechecker
+COPY . /home/typechecker 
+WORKDIR /home/typechecker
+RUN npm install
+EXPOSE 6969
+
+ENTRYPOINT ["/bin/bash", "/home/typechecker/entry.sh"]
+CMD ["bash"]

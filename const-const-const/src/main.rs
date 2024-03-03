@@ -69,6 +69,7 @@ async fn set_var(data: web::Json<PostData>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    println!("const const const starting up!");
     HttpServer::new(|| {
         App::new()
             .service(hello)
@@ -76,7 +77,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_all_vars)
             .service(set_var)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }
