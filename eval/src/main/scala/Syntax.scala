@@ -28,7 +28,8 @@ object Syntax {
 
   // Skip
   case object Skip extends Stmt
-
+  
+  case class Delete(k: String) extends Stmt
   case class Seq(s1: Stmt, s2: Stmt) extends Stmt
   case class IfThenElseS(e: Expr, s1: Stmt, s2: Stmt) extends Stmt
   case class Assign(x: Variable, e: Expr) extends Stmt

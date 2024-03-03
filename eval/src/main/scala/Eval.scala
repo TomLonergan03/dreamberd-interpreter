@@ -312,73 +312,153 @@ object Eval {
   // Evaluation
   // ======================================================================
 
-  def eval(env: Env[Value], e: Expr): Value = e match {
-    // Value
-    case v: Value => v
+  def eval(env: Env[Value], deletedKeywords: Set[String], e: Expr): Value =
+    e match {
+      // Value
+      case v: Value => v
 
-    // BEGIN ANSWER
-    case Plus(e1, e2)     => Value.add(eval(env, e1), eval(env, e2))
-    case Minus(e1, e2)    => Value.subtract(eval(env, e1), eval(env, e2))
-    case Times(e1, e2)    => Value.multiply(eval(env, e1), eval(env, e2))
-    case Divide(e1, e2)   => Value.divide(eval(env, e1), eval(env, e2))
-    case Exponent(e1, e2) => Value.exponent(eval(env, e1), eval(env, e2))
-    case IfThenElse(e, e1, e2) =>
-      if eval(env, e) == BoolV(BoolOptions.True) then eval(env, e1)
-      else eval(env, e2)
-    case OneEquals(e1, e2)   => Value.oneEquals(eval(env, e1), eval(env, e2))
-    case TwoEquals(e1, e2)   => Value.twoEquals(eval(env, e1), eval(env, e2))
-    case ThreeEquals(e1, e2) => Value.threeEquals(eval(env, e1), eval(env, e2))
-    case FourEquals(e1, e2)  => Value.fourEquals(eval(env, e1), eval(env, e2))
-    case Length(e)           => Value.length(eval(env, e))
-    case Index(e1, e2)       => Value.index(eval(env, e1), eval(env, e2))
-    case Concat(e1, e2)      => Value.concat(eval(env, e1), eval(env, e2))
-    case Apply(e1, e2) =>
-      val v1 = eval(env, e1)
-      val v2 = eval(env, e2)
-      v1 match {
-        case FunV(x, e)    => eval(env, subst(e, v2, x))
-        case RecV(f, x, e) => eval(env, subst(subst(e, v1, f), v2, x))
-        case _             => sys.error("eval: apply e1 not a function")
-      }
-    case Let(x, e1, e2) => eval(env, subst(e2, eval(env, e1), x))
-    case Pair(e1, e2)   => PairV(eval(env, e1), eval(env, e2))
-    case First(e) =>
-      eval(env, e) match {
-        case PairV(v1, v2) => v1
-        case _             => sys.error("eval: First e not a pair")
-      }
-    case Second(e) =>
-      eval(env, e) match {
-        case PairV(v1, v2) => v2
-        case _             => sys.error("eval: Second e not a pair")
-      }
-    case Record(es) => RecordV(es.map((l, e) => (l, eval(env, e))))
-    case Proj(e, l) =>
-      eval(env, e) match {
-        case RecordV(es) => es(l)
-        case _           => sys.error("eval: Proj e not a record")
-      }
-    // case Ref(e) => Cell(RefCell(eval(e)))
-    // case Deref(e) =>
-    //   eval(e) match {
-    //     case Cell(r) => r.get
-    //     case _       => sys.error("eval: deref not a cell")
-    //   }
-    // case Assign(e1, e2) =>
-    //   eval(e1) match {
-    //     case Cell(r) => r.set(eval(e2)); UnitV
-    //     case _       => sys.error("eval: assign not a cell")
-    //   }
-    case Num(n)       => NumV(n)
-    case Bool(b)      => BoolV(b)
-    case Str(s)       => StringV(s)
-    case Var(x)       => sys.error("eval: free variable: " + x)
-    case Lambda(x, e) => FunV(x, e)
-    case Rec(f, x, e) => RecV(f, x, e)
-    case Unit         => UnitV
-    case _ =>
-      sys.error("eval: should have been desugared " + e)
-  }
+      // BEGIN ANSWER
+      case Plus(e1, e2) =>
+        if (deletedKeywords.contains("+"))
+          sys.error("The expression '+' has been deleted")
+        else
+          Value.add(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case Minus(e1, e2) =>
+        if (deletedKeywords.contains("-"))
+          sys.error("The expression '-' has been deleted")
+        else
+          Value.subtract(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case Times(e1, e2) =>
+        if (deletedKeywords.contains("*"))
+          sys.error("The expression '*' has been deleted")
+        else
+          Value.multiply(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case Divide(e1, e2) =>
+        if (deletedKeywords.contains("/"))
+          sys.error("The expression '/' has been deleted")
+        else
+          Value.divide(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case Exponent(e1, e2) =>
+        if (deletedKeywords.contains("^"))
+          sys.error("The expression '^' has been deleted")
+        else
+          Value.exponent(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case IfThenElse(e, e1, e2) =>
+        if (deletedKeywords.contains("if"))
+          sys.error("The expression 'if' has been deleted")
+        else if eval(env, deletedKeywords, e) == BoolV(BoolOptions.True) then
+          eval(env, deletedKeywords, e1)
+        else eval(env, deletedKeywords, e2)
+      case OneEquals(e1, e2) =>
+        if (deletedKeywords.contains("="))
+          sys.error("The expression '=' has been deleted")
+        else
+          Value.oneEquals(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case TwoEquals(e1, e2) =>
+        if (deletedKeywords.contains("=="))
+          sys.error("The expression '==' has been deleted")
+        else
+          Value.twoEquals(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+
+      case ThreeEquals(e1, e2) =>
+        if (deletedKeywords.contains("==="))
+          sys.error("The expression '===' has been deleted")
+        else
+          Value.threeEquals(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case FourEquals(e1, e2) =>
+        if (deletedKeywords.contains("===="))
+          sys.error("The expression '====' has been deleted")
+        else
+          Value.fourEquals(
+            eval(env, deletedKeywords, e1),
+            eval(env, deletedKeywords, e2)
+          )
+      case Length(e) => Value.length(eval(env, deletedKeywords, e))
+      case Index(e1, e2) =>
+        Value.index(
+          eval(env, deletedKeywords, e1),
+          eval(env, deletedKeywords, e2)
+        )
+      case Concat(e1, e2) =>
+        Value.concat(
+          eval(env, deletedKeywords, e1),
+          eval(env, deletedKeywords, e2)
+        )
+      case Apply(e1, e2) =>
+        val v1 = eval(env, deletedKeywords, e1)
+        val v2 = eval(env, deletedKeywords, e2)
+        v1 match {
+          case FunV(x, e) => eval(env, deletedKeywords, subst(e, v2, x))
+          case RecV(f, x, e) =>
+            eval(env, deletedKeywords, subst(subst(e, v1, f), v2, x))
+          case _ => sys.error("eval: apply e1 not a function")
+        }
+      case Let(x, e1, e2) =>
+        eval(env, deletedKeywords, subst(e2, eval(env, deletedKeywords, e1), x))
+      case Pair(e1, e2) =>
+        PairV(eval(env, deletedKeywords, e1), eval(env, deletedKeywords, e2))
+      case First(e) =>
+        eval(env, deletedKeywords, e) match {
+          case PairV(v1, v2) => v1
+          case _             => sys.error("eval: First e not a pair")
+        }
+      case Second(e) =>
+        eval(env, deletedKeywords, e) match {
+          case PairV(v1, v2) => v2
+          case _             => sys.error("eval: Second e not a pair")
+        }
+      case Record(es) =>
+        RecordV(es.map((l, e) => (l, eval(env, deletedKeywords, e))))
+      case Proj(e, l) =>
+        eval(env, deletedKeywords, e) match {
+          case RecordV(es) => es(l)
+          case _           => sys.error("eval: Proj e not a record")
+        }
+      // case Ref(e) => Cell(RefCell(eval(e)))
+      // case Deref(e) =>
+      //   eval(e) match {
+      //     case Cell(r) => r.get
+      //     case _       => sys.error("eval: deref not a cell")
+      //   }
+      // case Assign(e1, e2) =>
+      //   eval(e1) match {
+      //     case Cell(r) => r.set(eval(e2)); UnitV
+      //     case _       => sys.error("eval: assign not a cell")
+      //   }
+      case Num(n)       => NumV(n)
+      case Bool(b)      => BoolV(b)
+      case Str(s)       => StringV(s)
+      case Var(x)       => sys.error("eval: free variable: " + x)
+      case Lambda(x, e) => FunV(x, e)
+      case Rec(f, x, e) => RecV(f, x, e)
+      case Unit         => UnitV
+      case _ =>
+        sys.error("eval: should have been desugared " + e)
+    }
 
   // END ANSWER
 
@@ -424,8 +504,7 @@ object Eval {
 
 @main def test() =
   var env = ListMap.empty[Variable, Value]
-  println(Eval.eval(env, OneEquals(NumV(2.4), NumV(3))))
-  println(
-    Eval.eval(env, TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True)))
-  )
-  println(Eval.eval(env, Let("😀😀", Num(3), Num(4))))
+  println(Eval.eval(env, Set[String](), OneEquals(NumV(2.4), NumV(3))))
+  println(Eval.eval(env, Set[String](), TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
+  println(Eval.eval(env, Set[String](), Let("😀😀", Num(3), Num(4))))
+  
