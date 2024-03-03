@@ -300,7 +300,7 @@ object Eval {
 
     def index(v1: Value, v2: Value): Value = (v1, v2) match
       case (StringV(v1), NumV(v2)) =>
-        StringV(v1.charAt(Math.round(v2)).toString)
+        StringV(v1.charAt(Math.round(v2)+1).toString) // added +1 as index starts from -1
       case _ => sys.error("arguments to index are not valid")
 
     def concat(v1: Value, v2: Value): Value = (v1, v2) match
@@ -459,7 +459,20 @@ object Eval {
       case _ =>
         sys.error("eval: should have been desugared " + e)
     }
-
+  
+  def output(e: Value): Unit = // TODO: fix weird output
+    def stringing (e: Value): String = e match {
+      case NumV(n)       => n.toString
+      case BoolV(b)      => b.toString
+      case StringV(s)    => s
+      case PairV(v1, v2) => "(" + stringing(v1) + ", " + stringing(v2) + ")"
+      case RecordV(es)   => es.toString
+      case FunV(x, e)    => "(" + x + ", " + stringing(eval(ListMap.empty[Variable, Value], Set[String](), e)) + ")"
+      case RecV(f, x, e) => "(" + f + ", " + x + ", " + stringing(eval(ListMap.empty[Variable, Value], Set[String](), e)) + ")"
+      case UnitV         => "()"
+      case _             => sys.error("eval: should have been desugared " + e)
+    }
+    println(stringing(e))
   // END ANSWER
 
   type Subst[A] = ListMap[Variable, A]
@@ -504,7 +517,10 @@ object Eval {
 
 @main def test() =
   var env = ListMap.empty[Variable, Value]
-  println(Eval.eval(env, Set[String](), OneEquals(NumV(2.4), NumV(3))))
-  println(Eval.eval(env, Set[String](), TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
-  println(Eval.eval(env, Set[String](), Let("😀😀", Num(3), Num(4))))
+  var deletedKeywords = Set[String]()
+  println(Eval.eval(env, deletedKeywords, OneEquals(NumV(2.4), NumV(3))))
+  println(Eval.eval(env, deletedKeywords, TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
+  println(Eval.eval(env, deletedKeywords, Let("😀😀", PairV(NumV(3), NumV(3)), PairV(NumV(3), NumV(3)))))
+  println()
+  Eval.output(Eval.eval(env, deletedKeywords, PairV(NumV(3), NumV(3))))
   
