@@ -65,6 +65,7 @@ object Syntax {
   case class Str(s: String) extends Expr
   case class Length(e: Expr) extends Expr
   case class Index(e1: Expr, e2: Expr) extends Expr
+  case class IndexTo(e1: Expr, e2: Expr, e3: Expr) extends Expr
   case class Concat(e1: Expr, e2: Expr) extends Expr
 
   // Variables and let-binding
