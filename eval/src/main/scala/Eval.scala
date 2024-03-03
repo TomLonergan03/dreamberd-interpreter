@@ -96,10 +96,10 @@ object Eval {
         case Index(t1, t2)  => Index(apply(theta, t1), apply(theta, t2))
         case Concat(t1, t2) => Concat(apply(theta, t1), apply(theta, t2))
 
-        case Let(y, t1, t2) => {
-          val z = generator.genVar(y);
-          Let(z, apply(theta, t1), apply(theta, swap(t2, y, z)))
-        }
+        // case Let(y, t1, t2) => {
+        //   val z = generator.genVar(y);
+        //   Let(z, apply(theta, t1), apply(theta, swap(t2, y, z)))
+        // }
 
         // Pairs
         case Pair(t1, t2) => Pair(apply(theta, t1), apply(theta, t2))
@@ -300,7 +300,7 @@ object Eval {
 
     def index(v1: Value, v2: Value): Value = (v1, v2) match
       case (StringV(v1), NumV(v2)) =>
-        StringV(v1.charAt(Math.round(v2)+1).toString) // added +1 as index starts from -1
+        StringV(v1.charAt(Math.round(v2)).toString)
       case _ => sys.error("arguments to index are not valid")
 
     def concat(v1: Value, v2: Value): Value = (v1, v2) match
@@ -317,7 +317,6 @@ object Eval {
       // Value
       case v: Value => v
 
-      // BEGIN ANSWER
       case Plus(e1, e2) =>
         if (deletedKeywords.contains("+"))
           sys.error("The expression '+' has been deleted")

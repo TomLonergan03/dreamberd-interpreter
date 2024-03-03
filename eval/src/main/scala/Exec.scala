@@ -1,5 +1,6 @@
 import DreamBerd.Syntax.Syntax._
 import DreamBerd.Eval.Eval
+import scala.collection.mutable.ListMap
 
 object Exec {
 
@@ -29,6 +30,7 @@ object Exec {
           Eval.eval(env, deletedKeywords, when, existsTuple.head)
         }
         (env + (x -> v), deletedKeywords, when)
+      case Reverse() => (env, deletedKeywords, when)
     }
 
 }

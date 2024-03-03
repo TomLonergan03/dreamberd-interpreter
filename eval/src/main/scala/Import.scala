@@ -32,8 +32,7 @@ var example = """
           type: Num,
           value: 3
         }
-      },
-      priority: 2
+      }
     }
   ]
 }
@@ -73,6 +72,26 @@ implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
     } yield e
 }
 
+implicit val decodeProgram: Decoder[Program] = new Decoder[Program] {
+  final def apply(c: HCursor): Decoder.Result[Program] =
+    for {
+      `type` <- c.downField("type").as[String]
+      lines <- c.downField("lines").as[List[Line]]
+    } yield {
+      new Program(lines)
+    }
+}
+
+implicit val decodeLine: Decoder[Line] = new Decoder[Line] {
+  final def apply(c: HCursor): Decoder.Result[Line] =
+    for {
+      tree <- c.downField("tree").as[Stmt]
+      priority <- c.downField("priority").as[Int]
+    } yield {
+      new Line(tree, priority)
+    }
+}
+
 implicit val decodeStmt: Decoder[Stmt] = new Decoder[Stmt] {
   final def apply(c: HCursor): Decoder.Result[Stmt] =
     for {
@@ -101,9 +120,9 @@ implicit val decodeIfThenElseS: Decoder[IfThenElseS] =
   new Decoder[IfThenElseS] {
     final def apply(c: HCursor): Decoder.Result[IfThenElseS] =
       for {
-        e <- c.downField("e").as[Expr]
-        s1 <- c.downField("s1").as[Stmt]
-        s2 <- c.downField("s2").as[Stmt]
+        e <- c.downField("condition").as[Expr]
+        s1 <- c.downField("then").as[Stmt]
+        s2 <- c.downField("else").as[Stmt]
       } yield {
         new IfThenElseS(e, s1, s2)
       }
@@ -116,15 +135,6 @@ implicit val decodeAssign: Decoder[Assign] = new Decoder[Assign] {
       e <- c.downField("e").as[Expr]
     } yield {
       new Assign(x, e)
-    }
-}
-
-implicit val decodeProgram: Decoder[Program] = new Decoder[Program] {
-  final def apply(c: HCursor): Decoder.Result[Program] =
-    for {
-      lines <- c.downField("lines").as[List[Stmt]]
-    } yield {
-      lines
     }
 }
 
@@ -390,4 +400,5 @@ object Import {
 object Main extends App {
   val parsed = Import.parse(example)
   println(parsed)
+
 }
