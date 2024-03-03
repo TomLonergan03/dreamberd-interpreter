@@ -12,6 +12,8 @@ import (
 )
 
 var cliName string = "dreamREPL"
+var temp_filepath string = "temp.txt"
+var script_filepath string = "./eval.sh"
 
 var clear map[string]func()     //create a map for storing clear functions
 var commands map[string]func()  //map for storing possible functions
@@ -92,8 +94,40 @@ func readFile(filePath string) string {
 }
 
 func run(snippet string) {
-	// TODOLater - Implement running evaluator
-	fmt.Println("Now running: ", snippet)
+	file, err := os.OpenFile(temp_filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		fmt.Println("Error opening the file:", err)
+		return
+	}
+	defer file.Close()
+
+	bytes := []byte(snippet)
+
+	// Write content to the file
+	_, err = file.Write(bytes)
+	if err != nil {
+		fmt.Println("Error writing to the file:", err)
+		return
+	}
+
+	fmt.Print("Now running: ", script_filepath, "\r\n")
+
+	// Arguments to be passed to the Bash script
+	scriptArguments := []string{temp_filepath}
+
+	cmd := exec.Command("bash", script_filepath)
+	cmd.Args = append(cmd.Args, scriptArguments...)
+
+	// Redirect standard output and error streams
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Run the command
+	e := cmd.Run()
+	if e != nil {
+		fmt.Print("Error executing script:", e, "\r\n")
+		return
+	}
 }
 
 func handleInvalidCmd(text string) {
