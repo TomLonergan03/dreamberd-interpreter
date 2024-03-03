@@ -13,7 +13,9 @@ import (
 
 var cliName string = "dreamREPL"
 
-var clear map[string]func() //create a map for storing clear funcs
+var clear map[string]func()     //create a map for storing clear functions
+var commands map[string]func()  //map for storing possible functions
+var backspace map[string]func() //map for backspace functions
 
 func init() {
 	clear = make(map[string]func())
@@ -27,19 +29,31 @@ func init() {
 		cmd.Stdout = os.Stdout
 		cmd.Run()
 	}
+
+	commands = make(map[string]func())
+	commands["help"] = displayHelp
+	commands["clear"] = clearScreen
+
+	backspace = make(map[string]func())
+	backspace["windows"] = func() {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+	backspace["linux"] = func() {
+		// Move cursor back, print a space, move cursor back again
+		fmt.Print("\b \b")
+	}
 }
 
-// printPrompt displays the repl prompt at the start of each loop
 func printPrompt() {
 	fmt.Print(cliName, "> ")
 }
 
-// printUnknown informs the user about invalid commands
 func printUnknown(text string) {
 	fmt.Println(text, ": command not found")
 }
 
-// displayHelp informs the user about our hardcoded functions
 func displayHelp() {
 	fmt.Println()
 	fmt.Print("Welcome to ", cliName, "! These are the available commands: \r\n")
@@ -57,6 +71,7 @@ func clearScreen() {
 	clear_function, result := clear[runtime.GOOS]
 	if result {
 		clear_function()
+		printPrompt()
 	} else {
 		panic("Unsupported OS!")
 	}
@@ -81,46 +96,35 @@ func run(snippet string) {
 	fmt.Println("Now running: ", snippet)
 }
 
-// handleInvalidCmd attempts to recover from a bad command
 func handleInvalidCmd(text string) {
 	defer printUnknown(text)
 }
 
-// handleCmd parses the given commands
-func handleCmd(text string) {
-	handleInvalidCmd(text)
-}
-
-// cleanInput preprocesses input to the db repl
+// Format input string for parsing
 func cleanInput(text string) string {
 	output := strings.TrimSpace(text)
 	output = strings.ToLower(output)
 	return output
 }
 
-// TODOLater - Make a better function name
 func handleCommand(screen tcell.Screen, command string) {
-	text := cleanInput(command)
-	if strings.EqualFold("help", text) {
-		displayHelp()
-	} else if strings.EqualFold("clear", text) {
-		clearScreen()
-		printPrompt()
-	} else if strings.EqualFold("exit", text) {
-		// Close the program on the exit command
+	command = cleanInput(command)
+	if value, exists := commands[command]; exists {
+		value()
+	} else if strings.EqualFold("exit", command) {
 		screen.Fini()
 		os.Exit(0)
-	} else if strings.HasPrefix(text, "read(") {
-		filePath := strings.TrimPrefix(text, "read(")
+	} else if strings.HasPrefix(command, "read(") {
+		filePath := strings.TrimPrefix(command, "read(")
 		filePath = strings.TrimSuffix(filePath, ")")
 		run(readFile(filePath))
-	} else if strings.HasPrefix(text, "run(") {
-		snippet := strings.TrimPrefix(text, "run(")
+	} else if strings.HasPrefix(command, "run(") {
+		snippet := strings.TrimPrefix(command, "run(")
 		snippet = strings.TrimSuffix(snippet, ")")
 		run(snippet)
 	} else {
 		// Pass the command to the parser
-		handleCmd(text)
+		handleInvalidCmd(command)
 	}
 }
 
@@ -160,13 +164,12 @@ func main() {
 					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
 						if len(input) > 0 {
 							input = input[:len(input)-1]
-							if runtime.GOOS == "windows" {
-								cmd := exec.Command("cmd", "/c", "cls")
-								cmd.Stdout = os.Stdout
-								cmd.Run()
+							// Determine how to backspace based on OS
+							backspace_function, result := backspace[runtime.GOOS]
+							if result {
+								backspace_function()
 							} else {
-								// Move cursor back, print a space, move cursor back again
-								fmt.Print("\b \b")
+								panic("Unsupported OS!")
 							}
 						}
 					} else if event.Key() == tcell.KeyCtrlC {
@@ -174,7 +177,6 @@ func main() {
 						os.Exit(0)
 					} else if event.Key() == tcell.KeyCtrlL {
 						clearScreen()
-						printPrompt()
 						fmt.Print(input)
 					} else {
 						input += string(event.Rune())
@@ -183,9 +185,6 @@ func main() {
 				}
 			}
 		}()
-
 		<-quit
-
-		screen.Show()
 	}
 }
