@@ -2,6 +2,7 @@ import MistralClient from '@mistralai/mistralai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
+import express from "express";
 dotenv.config();
 
 async function typecheck(program, spec, client) {
@@ -21,9 +22,9 @@ async function typecheck(program, spec, client) {
   console.log('Result: ', result);
 
   if (result.toLowerCase() === 'yes') {
-    process.exit(0);
+    return true;
   } else {
-    process.exit(1);
+    return false;
   }
 }
 
@@ -49,25 +50,44 @@ async function doesHalt(program, spec, client) {
   }
 }
 
-// check args
-if (process.argv.length < 4) {
-  console.log('Needs more args, usage: typechecker <program> <spec>');
-  process.exit(1);
+function run_typechecker(program, spec) {
+  // check args
+  // if (process.argv.length < 4) {
+  //   console.log('Needs more args, usage: typechecker <program> <spec>');
+  //   process.exit(1);
+  // }
+
+  // process filepaths
+  // const programFile = process.argv[2];
+  // const specFile = process.argv[3];
+  // const absProgramFile = path.resolve(process.cwd(), programFile);
+  // const absSpecFile = path.resolve(process.cwd(), specFile);
+
+  // parse args into strings
+  // const program = fs.readFileSync(absProgramFile).toString('utf-8');
+  // const spec = fs.readFileSync(absSpecFile).toString('utf-8');
+
+  // create client
+  const apiKey = process.env.MISTRAL_API_KEY || 'your_api_key';
+  console.log(apiKey);
+  const client = new MistralClient(apiKey);
+
+  // typecheck
+  return typecheck(program, spec, client);
 }
 
-// process filepaths
-const programFile = process.argv[2];
-const specFile = process.argv[3];
-const absProgramFile = path.resolve(process.cwd(), programFile);
-const absSpecFile = path.resolve(process.cwd(), specFile);
+const PORT = 6969;
+const app = express();
+app.use(express.json());
 
-// parse args into strings
-const program = fs.readFileSync(absProgramFile).toString('utf-8');
-const spec = fs.readFileSync(absSpecFile).toString('utf-8');
+app.post('/typechecker', async (req, res) => {
+  const programBody = req.body.program;
+  const specBody = req.body.spec;
+  console.log(programBody);
+  const result = await run_typechecker(programBody, specBody);
+  res.end(result.toString());
+});
 
-// create client
-const apiKey = process.env.MISTRAL_API_KEY || 'your_api_key';
-const client = new MistralClient(apiKey);
-
-// typecheck
-typecheck(program, spec, client);
+app.listen(PORT, () => {
+    console.log(`Server is running on Port ${PORT}`)
+})
