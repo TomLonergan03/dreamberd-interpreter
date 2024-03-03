@@ -419,8 +419,6 @@ object Eval {
 
 @main def test() =
   var env = ListMap.empty[Variable, Value]
-  println(Eval.eval(env, OneEquals(NumV(2.4), NumV(3))))
-@main def test() =
   println(Eval.eval(OneEquals(NumV(2.4), NumV(3))))
   println(
     Eval.eval(TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True)))
