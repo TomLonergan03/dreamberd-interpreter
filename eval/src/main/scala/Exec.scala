@@ -1,5 +1,6 @@
 import DreamBerd.Syntax.Syntax._
 import DreamBerd.Eval.Eval
+import scala.collection.mutable.ListMap
 
 object Exec {
 
@@ -24,8 +25,9 @@ object Exec {
           case BoolV(BoolOptions.Maybe) => exec(env, deletedKeywords, s2)
         }
       case Assign(x, e) =>
-        val v = Eval.eval(env, e)
-        env + (x -> v)
+        val v = Eval.eval(env, deletedKeywords, e)
+        (env + (x -> v), deletedKeywords)
+      case Reverse() => (env, deletedKeywords)
     }
 
 }

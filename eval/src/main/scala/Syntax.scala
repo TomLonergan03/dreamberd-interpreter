@@ -27,13 +27,15 @@ object Syntax {
   sealed abstract class Stmt
 
   case object Skip extends Stmt
-  
+
   case class Delete(k: String) extends Stmt
   case class Seq(s1: Stmt, s2: Stmt) extends Stmt
   case class IfThenElseS(e: Expr, s1: Stmt, s2: Stmt) extends Stmt
   case class Assign(x: Variable, e: Expr) extends Stmt
+  case class Reverse() extends Stmt
 
-  type Program = List[Stmt]
+  case class Program(lines: List[Line])
+  case class Line(t: Stmt, p: Int)
 
   // ======================================================================
   // Expressions
