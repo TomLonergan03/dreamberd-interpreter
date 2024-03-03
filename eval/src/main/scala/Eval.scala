@@ -193,12 +193,16 @@ object Eval {
       case (NumV(v1), NumV(v2)) => NumV(v1 * v2)
       case _ => sys.error("arguments to multiplication are non-numeric")
 
+    def exponent(v1: Value, v2: Value): Value = (v1, v2) match
+      case (NumV(v1), NumV(v2)) => NumV(Math.pow(v1, v2).toFloat)
+      case _ => sys.error("arguments to multiplication are non-numeric")
+
     def divide(v1: Value, v2: Value): Value = (v1, v2) match
       case (NumV(v1), NumV(0))  => sys.error("Denominator cannot be 0")
       case (NumV(v1), NumV(v2)) => NumV(v1 / v2)
       case _ => sys.error("arguments to multiplication are non-numeric")
 
-    def OneEquals(v1: Value, v2: Value): Value = (v1, v2) match
+    def oneEquals(v1: Value, v2: Value): Value = (v1, v2) match
       case (NumV(v1), NumV(v2)) =>
         if (Math.round(v1) == Math.round(v2))
           BoolV(BoolOptions.True)
@@ -313,20 +317,21 @@ object Eval {
     case v: Value => v
 
     // BEGIN ANSWER
-    case Plus(e1, e2)     => Value.add(eval(e1), eval(e2))
-    case Minus(e1, e2)    => Value.subtract(eval(e1), eval(e2))
-    case Times(e1, e2)    => Value.multiply(eval(e1), eval(e2))
-    case Divide(e1, e2)   => Value.divide(eval(e1), eval(e2))
-    case Exponent(e1, e2) => Value.exponent(eval(e1), eval(e2))
+    case Plus(e1, e2)     => Value.add(eval(env, e1), eval(env, e2))
+    case Minus(e1, e2)    => Value.subtract(eval(env, e1), eval(env, e2))
+    case Times(e1, e2)    => Value.multiply(eval(env, e1), eval(env, e2))
+    case Divide(e1, e2)   => Value.divide(eval(env, e1), eval(env, e2))
+    case Exponent(e1, e2) => Value.exponent(eval(env, e1), eval(env, e2))
     case IfThenElse(e, e1, e2) =>
-      if eval(e) == BoolV(BoolOptions.True) then eval(e1) else eval(e2)
-    case OneEquals(e1, e2)   => Value.oneEquals(eval(e1), eval(e2))
-    case TwoEquals(e1, e2)   => Value.twoEquals(eval(e1), eval(e2))
-    case ThreeEquals(e1, e2) => Value.threeEquals(eval(e1), eval(e2))
-    case FourEquals(e1, e2)  => Value.fourEquals(eval(e1), eval(e2))
-    case Length(e)           => Value.length(eval(e))
-    case Index(e1, e2)       => Value.index(eval(e1), eval(e2))
-    case Concat(e1, e2)      => Value.concat(eval(e1), eval(e2))
+      if eval(env, e) == BoolV(BoolOptions.True) then eval(env, e1)
+      else eval(env, e2)
+    case OneEquals(e1, e2)   => Value.oneEquals(eval(env, e1), eval(env, e2))
+    case TwoEquals(e1, e2)   => Value.twoEquals(eval(env, e1), eval(env, e2))
+    case ThreeEquals(e1, e2) => Value.threeEquals(eval(env, e1), eval(env, e2))
+    case FourEquals(e1, e2)  => Value.fourEquals(eval(env, e1), eval(env, e2))
+    case Length(e)           => Value.length(eval(env, e))
+    case Index(e1, e2)       => Value.index(eval(env, e1), eval(env, e2))
+    case Concat(e1, e2)      => Value.concat(eval(env, e1), eval(env, e2))
     case Apply(e1, e2) =>
       val v1 = eval(env, e1)
       val v2 = eval(env, e2)
@@ -419,8 +424,8 @@ object Eval {
 
 @main def test() =
   var env = ListMap.empty[Variable, Value]
-  println(Eval.eval(OneEquals(NumV(2.4), NumV(3))))
+  println(Eval.eval(env, OneEquals(NumV(2.4), NumV(3))))
   println(
-    Eval.eval(TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True)))
+    Eval.eval(env, TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True)))
   )
-  println(Eval.eval(Let("😀😀", Num(3), Num(4))))
+  println(Eval.eval(env, Let("😀😀", Num(3), Num(4))))

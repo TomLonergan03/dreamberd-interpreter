@@ -50,8 +50,12 @@ implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
         case "Minus"       => c.as[Minus]
         case "Times"       => c.as[Times]
         case "Divide"      => c.as[Divide]
+        case "Exponent"    => c.as[Exponent]
         case "Bool"        => c.as[Bool]
+        case "OneEquals"   => c.as[OneEquals]
+        case "TwoEquals"   => c.as[TwoEquals]
         case "ThreeEquals" => c.as[ThreeEquals]
+        case "FourEquals"  => c.as[FourEquals]
         case "Str"         => c.as[Str]
         case "Length"      => c.as[Length]
         case "Index"       => c.as[Index]
@@ -173,6 +177,16 @@ implicit val decodeDivide: Decoder[Divide] = new Decoder[Divide] {
     }
 }
 
+implicit val decodeExponent: Decoder[Exponent] = new Decoder[Exponent] {
+  final def apply(c: HCursor): Decoder.Result[Exponent] =
+    for {
+      left <- c.downField("left").as[Expr]
+      right <- c.downField("right").as[Expr]
+    } yield {
+      new Exponent(left, right)
+    }
+}
+
 implicit val decodeBool: Decoder[Bool] = new Decoder[Bool] {
   final def apply(c: HCursor): Decoder.Result[Bool] =
     for {
@@ -196,6 +210,28 @@ implicit val decodeBoolOptions: Decoder[BoolOptions] =
       }
   }
 
+implicit val decodeOneEquals: Decoder[OneEquals] =
+  new Decoder[OneEquals] {
+    final def apply(c: HCursor): Decoder.Result[OneEquals] =
+      for {
+        left <- c.downField("left").as[Expr]
+        right <- c.downField("right").as[Expr]
+      } yield {
+        new OneEquals(left, right)
+      }
+  }
+
+implicit val decodeTwoEquals: Decoder[TwoEquals] =
+  new Decoder[TwoEquals] {
+    final def apply(c: HCursor): Decoder.Result[TwoEquals] =
+      for {
+        left <- c.downField("left").as[Expr]
+        right <- c.downField("right").as[Expr]
+      } yield {
+        new TwoEquals(left, right)
+      }
+  }
+
 implicit val decodeThreeEquals: Decoder[ThreeEquals] =
   new Decoder[ThreeEquals] {
     final def apply(c: HCursor): Decoder.Result[ThreeEquals] =
@@ -204,6 +240,17 @@ implicit val decodeThreeEquals: Decoder[ThreeEquals] =
         right <- c.downField("right").as[Expr]
       } yield {
         new ThreeEquals(left, right)
+      }
+  }
+
+implicit val decodeFourEquals: Decoder[FourEquals] =
+  new Decoder[FourEquals] {
+    final def apply(c: HCursor): Decoder.Result[FourEquals] =
+      for {
+        left <- c.downField("left").as[Expr]
+        right <- c.downField("right").as[Expr]
+      } yield {
+        new FourEquals(left, right)
       }
   }
 
