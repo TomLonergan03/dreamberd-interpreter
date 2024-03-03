@@ -3,6 +3,8 @@ package InputStream;
 use strict;
 use warnings;
 
+use Encode;
+
 # param {string} input
 sub new {
     my $class = shift;

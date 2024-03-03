@@ -2,24 +2,38 @@
 
 use strict;
 
+use utf8;
 use lib '.';
 use InputStream;
 use Tokeniser;
 use Parser;
 use Data::Dumper;
+use JSON;
+use Encode;
 
-my $input = "5 + 2!";
+$Data::Dumper::Indent = 1;
 
-# "
-# sum = lambda(a, b) {
-#     a + b!
-# }!
-# sum(1, 2)!
-# reverse!
-# ";
+my $input = "
+const const 4 = lambda(🔥, b) {
+    🔥 + b!
+}!
+4(1, 2)!
+if (;maybe) {
+    1!
+} else {
+    2!
+}!
+reverse!
+const const list = [1, 2, 3]!
+";
 
 my $stream = new InputStream($input);
 my $tokeniser = new Tokeniser($stream);
+# while (my $token = $tokeniser->next()) {
+#     print Dumper($token) . "\n";
+# }
+# exit 0;
 my $parser = new Parser($tokeniser);
-print $input . "\n";
-print Dumper($parser->parse_toplevel());
+my $ast = $parser->parse_toplevel();
+print Dumper($ast) . "\n";
+print to_json($ast) . "\n\n";

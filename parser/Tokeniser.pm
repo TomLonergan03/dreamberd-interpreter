@@ -3,10 +3,18 @@ package Tokeniser;
 use strict;
 use warnings;
 use Set::Object;
+use utf8;
 
-my $KEYWORDS = Set::Object->new(("if", "then", "else", "lambda", "true", "false", "reverse"));
-my $OPERATORS = qr/[+\-*\/%=&|<>;\^]/;
-my $PUNCTUATION = qr/[\(\),!\{\}\[\]]/;
+my $KEYWORDS = Set::Object->new((
+    "if", "then", "else", 
+    "lambda",
+    "true", "maybe", "false",
+    "reverse", 
+    "const const", "const var", "var const", "var var", "const const const"
+    ));
+my $OPERATORS = qr/[\+\-*\/%&\?|<>;\^]/;
+my $PUNCTUATION = qr/[\(\),=!\{\}\[\]]/;
+my $ID_STARTS = qr/[^\s\(\),=!\{\}\[\]\+\-\*\/%&\?|<>;\^]/;
 
 sub new {
     my $class = shift;
@@ -33,7 +41,7 @@ sub is_digit {
 sub is_id_start {
     my $self = shift;
     my $char = shift;
-    return $char =~ /[a-z_]/i;
+    return $char =~ $ID_STARTS;
 }
 
 sub is_id {
@@ -73,12 +81,23 @@ sub read_while {
 sub read_number {
     my $self = shift;
     my $number = $self->read_while(sub { $self->is_digit(shift) });
+    if ($self->{input}->peek() ne ' ') {
+        $number .= $self->read_while(sub { $self->is_id(shift) });
+    }
     return { "type" => 'number', "value" => $number };
 }
 
 sub read_ident {
     my $self = shift;
     my $id = $self->read_while(sub { $self->is_id(shift) });
+    if ($id eq "const" || $id eq "var") {
+        $self->read_while(sub { $self->is_whitespace(shift) });
+        $id .= " " . $self->read_while(sub { $self->is_id(shift) });
+        return {
+            "type" => 'binding',
+            "strength" => $id
+        };
+    }
     return {
         "type" => $self->is_keyword($id) ? 'keyword' : 'variable',
         "value" => $id
@@ -131,9 +150,6 @@ sub read_next {
     }
     if ($char eq '"') {
         return $self->read_string();
-    }
-    if ($self->is_digit($char)) {
-        return $self->read_number();
     }
     if ($self->is_id_start($char)) {
         return $self->read_ident();

@@ -3,7 +3,11 @@ package Parser;
 use strict;
 use warnings;
 
+use utf8;
 use JSON;
+use Data::Dumper;
+
+$Data::Dumper::Indent = 1;
 
 my $PRECEDENCE = {
     "=" => 1,
@@ -30,8 +34,6 @@ sub new {
     bless $self, $class;
     return $self;
 }
-
-use Data::Dumper;
 
 sub is_punctuation {
     my $self = shift;
@@ -149,10 +151,10 @@ sub parse_call {
 sub parse_varname {
     my $self = shift;
     my $name = $self->{input}->next();
-    if ($name->type ne "var") {
+    if ($name->{type} ne "variable") {
         $self->{input}->croak("Expecting variable name");
     }
-    return $name->value;
+    return $name->{value};
 }
 
 sub parse_if {
@@ -170,7 +172,7 @@ sub parse_if {
     };
     if ($self->is_keyword("else")) {
         $self->{input}->next();
-        $ret->else = $self->parse_expression()
+        $ret->{else} = $self->parse_expression()
     }
     return $ret;
 }
@@ -186,9 +188,10 @@ sub parse_lambda {
 
 sub parse_bool {
     my $self = shift;
+    my $token = $self->{input}->next();
     return {
         type => "bool",
-        value => $self->{input}->next()->value eq "true"
+        value => $token->{value}
     };
 }
 
@@ -197,6 +200,34 @@ sub maybe_call {
     my $expr = shift->();
     $expr = $self->parse_call($expr) if $self->is_punctuation("(");
     return $expr;
+}
+
+sub is_binding {
+    my $self = shift;
+    my $token = $self->{input}->peek();
+    return $token && $token->{type} eq "binding";
+}
+
+sub parse_binding {
+    my $self = shift;
+    my $binding = $self->{input}->next();
+    $binding->{name} = $self->parse_varname();
+    $self->skip_punctuation("=");
+    $binding->{value} = $self->parse_expression();
+    return $binding;
+}
+
+sub parse_array {
+    my $self = shift;
+    my $values = $self->delimited("[", "]", ",", sub { $self->parse_expression() });
+    my $array = {};
+    for (my $i = 0; $i < @$values; $i++) {
+        $array->{$i} = $values->[$i];
+    }
+    return {
+        type => "array",
+        value => $array
+    };
 }
 
 sub parse_atom {
@@ -209,12 +240,22 @@ sub parse_atom {
             return $exp;
         }
         if ($self->is_punctuation("{")) {
-            return $self->parse_prog();
+            return $self->parse_program();
+        }
+        if ($self->is_punctuation("[")) {
+            return $self->parse_array();
+        }
+        if ($self->is_operation(";")) {
+            $self->{input}->next();
+            return { type => "not", body => $self->parse_atom() };
+        }
+        if ($self->is_binding()) {
+            return $self->parse_binding();
         }
         if ($self->is_keyword("if")) {
             return $self->parse_if();
         }
-        if ($self->is_keyword("true") || $self->is_keyword("false")) {
+        if ($self->is_keyword("true") || $self->is_keyword("false") || $self->is_keyword("maybe")) {
             return $self->parse_bool();
         }
         if ($self->is_keyword("lambda")) {
@@ -222,7 +263,7 @@ sub parse_atom {
             return $self->parse_lambda();
         }
         my $token = $self->{input}->next();
-        if ($token->{type} eq "variable" || $token->{type} eq "number" || $token->{type} eq "string") {
+        if ($token->{type} eq "variable" || $token->{type} eq "number" || $token->{type} eq "string" || $token->{type} eq "keyword") {
             return $token;
         }
         $self->unexpected();
@@ -231,26 +272,26 @@ sub parse_atom {
 
 sub parse_toplevel {
     my $self = shift;
-    my $prog = [];
+    my $program = [];
     while (!$self->{input}->eof()) {
-        push @$prog, $self->parse_expression();
+        push @$program, $self->parse_expression();
         if (!$self->{input}->eof()) {
             $self->skip_punctuation("!");
         }
     }
-    return { type => "prog", prog => $prog };
+    return { type => "program", program => $program };
 }
 
-sub parse_prog {
+sub parse_program {
     my $self = shift;
-    my $prog = $self->delimited("{", "}", "!", sub { $self->parse_expression() });
-    if (@$prog == 0) {
-        return { type => "bool", value => 0 };
+    my $program = $self->delimited("{", "}", "!", sub { $self->parse_expression() });
+    if (@$program == 0) {
+        return { type => "bool", value => "false" };
     }
-    if (@$prog == 1) {
-        return $prog->[0];
+    if (@$program == 1) {
+        return $program->[0];
     }
-    return { type => "prog", prog => $prog };
+    return { type => "program", program => $program };
 }
 
 sub parse_expression {
