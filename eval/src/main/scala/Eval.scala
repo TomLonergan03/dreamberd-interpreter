@@ -1,3 +1,5 @@
+package DreamBerd.Eval
+
 import DreamBerd.Syntax.Syntax._
 import scala.collection.immutable.ListMap
 
@@ -18,18 +20,18 @@ object Eval {
 
         case Unit => Unit
 
-        case Num(n)         => Num(n)
-        case Plus(e1, e2)   => Plus(go(e1), go(e2))
-        case Minus(e1, e2)  => Minus(go(e1), go(e2))
-        case Times(e1, e2)  => Times(go(e1), go(e2))
-        case Divide(e1, e2) => Divide(go(e1), go(e2))
+        case Num(n)           => Num(n)
+        case Plus(e1, e2)     => Plus(go(e1), go(e2))
+        case Minus(e1, e2)    => Minus(go(e1), go(e2))
+        case Times(e1, e2)    => Times(go(e1), go(e2))
+        case Divide(e1, e2)   => Divide(go(e1), go(e2))
         case Exponent(e1, e2) => Exponent(go(e1), go(e2))
-        
+
         case Bool(b)               => Bool(b)
-        case OneEquals(e1, e2) => OneEquals(go(e1), go(e2))
-        case TwoEquals(e1, e2) => TwoEquals(go(e1), go(e2))
+        case OneEquals(e1, e2)     => OneEquals(go(e1), go(e2))
+        case TwoEquals(e1, e2)     => TwoEquals(go(e1), go(e2))
         case ThreeEquals(e1, e2)   => ThreeEquals(go(e1), go(e2))
-        case FourEquals(e1, e2)   => FourEquals(go(e1), go(e2))
+        case FourEquals(e1, e2)    => FourEquals(go(e1), go(e2))
         case IfThenElse(e, e1, e2) => IfThenElse(go(e), go(e1), go(e2))
 
         case Str(s)         => Str(s)
@@ -51,9 +53,9 @@ object Eval {
         case Record(es) => Record(es.map((x, e) => (x, go(e))))
         case Proj(e, l) => Proj(go(e), l)
 
-        case Ref(e)         => Ref(go(e))
-        case Deref(e)       => Deref(go(e))
-        case Assign(e1, e2) => Assign(go(e1), go(e2))
+        // case Ref(e)         => Ref(go(e))
+        // case Deref(e)       => Deref(go(e))
+        // case Assign(e1, e2) => Assign(go(e1), go(e2))
 
         case Sequ(e1, e2) => Sequ(go(e1), go(e2))
         case LetPair(x1, x2, e1, e2) =>
@@ -70,19 +72,21 @@ object Eval {
     def apply(theta: Subst[Expr], e: Expr): Expr =
       // BEGIN ANSWER
       e match {
-        case Num(e)        => Num(e)
-        case Plus(t1, t2)  => Plus(apply(theta, t1), apply(theta, t2))
-        case Minus(t1, t2) => Minus(apply(theta, t1), apply(theta, t2))
-        case Times(t1, t2) => Times(apply(theta, t1), apply(theta, t2))
-        case Divide(t1, t2) => Divide(apply(theta, t1), apply(theta, t2))
+        case Num(e)           => Num(e)
+        case Plus(t1, t2)     => Plus(apply(theta, t1), apply(theta, t2))
+        case Minus(t1, t2)    => Minus(apply(theta, t1), apply(theta, t2))
+        case Times(t1, t2)    => Times(apply(theta, t1), apply(theta, t2))
+        case Divide(t1, t2)   => Divide(apply(theta, t1), apply(theta, t2))
         case Exponent(t1, t2) => Exponent(apply(theta, t1), apply(theta, t2))
-         
+
         // Booleans
-        case Bool(b)    => Bool(b)
+        case Bool(b)           => Bool(b)
         case OneEquals(t1, t2) => OneEquals(apply(theta, t1), apply(theta, t2))
         case TwoEquals(t1, t2) => TwoEquals(apply(theta, t1), apply(theta, t2))
-        case ThreeEquals(t1, t2) => ThreeEquals(apply(theta, t1), apply(theta, t2))
-        case FourEquals(t1, t2) => FourEquals(apply(theta, t1), apply(theta, t2))
+        case ThreeEquals(t1, t2) =>
+          ThreeEquals(apply(theta, t1), apply(theta, t2))
+        case FourEquals(t1, t2) =>
+          FourEquals(apply(theta, t1), apply(theta, t2))
         case IfThenElse(t0, t1, t2) =>
           IfThenElse(apply(theta, t0), apply(theta, t1), apply(theta, t2))
 
@@ -152,10 +156,10 @@ object Eval {
 
         case Record(es) => Record(es.map((l, t) => (l, apply(theta, t))))
         case Proj(t, l) => Proj(apply(theta, t), l)
-        case Ref(t)     => Ref(apply(theta, t))
-        case Deref(t)   => Deref(apply(theta, t))
-        case Assign(t1, t2) =>
-          Assign(apply(theta, t1), apply(theta, t2))
+        // case Ref(t)     => Ref(apply(theta, t))
+        // case Deref(t)   => Deref(apply(theta, t))
+        // case Assign(t1, t2) =>
+        //   Assign(apply(theta, t1), apply(theta, t2))
         case Sequ(t1, t2) =>
           Sequ(apply(theta, t1), apply(theta, t2))
         case LetRecord(xs, t1, t2) => {
@@ -194,98 +198,94 @@ object Eval {
       case (NumV(v1), NumV(v2)) => NumV(v1 / v2)
       case _ => sys.error("arguments to multiplication are non-numeric")
 
-    def exponent(v1: Value, v2: Value): Value = (v1, v2) match
-      case (NumV(v1), NumV(v2)) => NumV(Math.pow(v1, v2).toFloat)
-      case _ => sys.error("arguments to exponentiation are non-numeric")
-
-    def oneEquals(v1: Value, v2: Value): Value = (v1, v2) match
-      case (NumV(v1), NumV(v2))       => 
+    def OneEquals(v1: Value, v2: Value): Value = (v1, v2) match
+      case (NumV(v1), NumV(v2)) =>
         if (Math.round(v1) == Math.round(v2))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (BoolV(BoolOptions.Maybe), BoolV(v2))  => BoolV(BoolOptions.True)
-      case (BoolV(v1), BoolV(BoolOptions.Maybe))  => BoolV(BoolOptions.True)
-      case (BoolV(v1), BoolV(v2))     => 
+      case (BoolV(BoolOptions.Maybe), BoolV(v2)) => BoolV(BoolOptions.True)
+      case (BoolV(v1), BoolV(BoolOptions.Maybe)) => BoolV(BoolOptions.True)
+      case (BoolV(v1), BoolV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (StringV(v1), StringV(v2)) => 
+      case (StringV(v1), StringV(v2)) =>
         if (v1.charAt(0).equals(v2.charAt(0)))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (NumV(v1), StringV(v2)) => 
+      case (NumV(v1), StringV(v2)) =>
         if (v1.toString().charAt(0).equals(v2.charAt(0)))
-            BoolV(BoolOptions.True)
+          BoolV(BoolOptions.True)
         else
-            BoolV(BoolOptions.False)
-      case (StringV(v1), NumV(v2)) => 
+          BoolV(BoolOptions.False)
+      case (StringV(v1), NumV(v2)) =>
         if (v2.toString().charAt(0).equals(v1.charAt(0)))
-            BoolV(BoolOptions.True)
+          BoolV(BoolOptions.True)
         else
-            BoolV(BoolOptions.False)
+          BoolV(BoolOptions.False)
       case _ => sys.error("arguments to = are not base types " + v1 + " " + v2)
-    
+
     def twoEquals(v1: Value, v2: Value): Value = (v1, v2) match
-      case (NumV(v1), NumV(v2))       => 
+      case (NumV(v1), NumV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (BoolV(BoolOptions.Maybe), BoolV(v2))  => 
+      case (BoolV(BoolOptions.Maybe), BoolV(v2)) =>
         val rand = new scala.util.Random
         if (rand.nextFloat() > 0.5)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (BoolV(v1), BoolV(BoolOptions.Maybe))  => 
+      case (BoolV(v1), BoolV(BoolOptions.Maybe)) =>
         val rand = new scala.util.Random
         if (rand.nextFloat() > 0.5)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (BoolV(v1), BoolV(v2))     => 
+      case (BoolV(v1), BoolV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (StringV(v1), StringV(v2)) => 
+      case (StringV(v1), StringV(v2)) =>
         if (v1.equals(v2))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (NumV(v1), StringV(v2)) => 
+      case (NumV(v1), StringV(v2)) =>
         if (v1.toString().equals(v2))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (StringV(v1), NumV(v2)) => 
+      case (StringV(v1), NumV(v2)) =>
         if (v2.toString().equals(v1))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
       case _ => sys.error("arguments to == are not base types " + v1 + " " + v2)
-      
-    
+
     def threeEquals(v1: Value, v2: Value): Value = (v1, v2) match
-      case (NumV(v1), NumV(v2))       => 
+      case (NumV(v1), NumV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (BoolV(v1), BoolV(v2))     => 
+      case (BoolV(v1), BoolV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case (StringV(v1), StringV(v2)) => 
+      case (StringV(v1), StringV(v2)) =>
         if (v1 == v2)
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case _ => sys.error("arguments to === are not base types " + v1 + " " + v2)
+      case _ =>
+        sys.error("arguments to === are not base types " + v1 + " " + v2)
 
     def fourEquals(v1: Value, v2: Value): Value = (v1, v2) match
       case _ => BoolV(BoolOptions.False)
@@ -295,7 +295,8 @@ object Eval {
       case _           => sys.error("argument to length is not a string")
 
     def index(v1: Value, v2: Value): Value = (v1, v2) match
-      case (StringV(v1), NumV(v2)) => StringV(v1.charAt(Math.round(v2)).toString)
+      case (StringV(v1), NumV(v2)) =>
+        StringV(v1.charAt(Math.round(v2)).toString)
       case _ => sys.error("arguments to index are not valid")
 
     def concat(v1: Value, v2: Value): Value = (v1, v2) match
@@ -307,62 +308,62 @@ object Eval {
   // Evaluation
   // ======================================================================
 
-  def eval(e: Expr): Value = e match {
+  def eval(env: Env[Value], e: Expr): Value = e match {
     // Value
     case v: Value => v
 
     // BEGIN ANSWER
-    case Plus(e1, e2)  => Value.add(eval(e1), eval(e2))
-    case Minus(e1, e2) => Value.subtract(eval(e1), eval(e2))
-    case Times(e1, e2) => Value.multiply(eval(e1), eval(e2))
-    case Divide(e1, e2) => Value.divide(eval(e1), eval(e2))
+    case Plus(e1, e2)     => Value.add(eval(e1), eval(e2))
+    case Minus(e1, e2)    => Value.subtract(eval(e1), eval(e2))
+    case Times(e1, e2)    => Value.multiply(eval(e1), eval(e2))
+    case Divide(e1, e2)   => Value.divide(eval(e1), eval(e2))
     case Exponent(e1, e2) => Value.exponent(eval(e1), eval(e2))
     case IfThenElse(e, e1, e2) =>
       if eval(e) == BoolV(BoolOptions.True) then eval(e1) else eval(e2)
-    case OneEquals(e1, e2)     => Value.oneEquals(eval(e1), eval(e2))
-    case TwoEquals(e1, e2)     => Value.twoEquals(eval(e1), eval(e2))
-    case ThreeEquals(e1, e2)   => Value.threeEquals(eval(e1), eval(e2))
-    case FourEquals(e1, e2)   => Value.fourEquals(eval(e1), eval(e2))
-    case Length(e)      => Value.length(eval(e))
-    case Index(e1, e2)  => Value.index(eval(e1), eval(e2))
-    case Concat(e1, e2) => Value.concat(eval(e1), eval(e2))
+    case OneEquals(e1, e2)   => Value.oneEquals(eval(e1), eval(e2))
+    case TwoEquals(e1, e2)   => Value.twoEquals(eval(e1), eval(e2))
+    case ThreeEquals(e1, e2) => Value.threeEquals(eval(e1), eval(e2))
+    case FourEquals(e1, e2)  => Value.fourEquals(eval(e1), eval(e2))
+    case Length(e)           => Value.length(eval(e))
+    case Index(e1, e2)       => Value.index(eval(e1), eval(e2))
+    case Concat(e1, e2)      => Value.concat(eval(e1), eval(e2))
     case Apply(e1, e2) =>
-      val v1 = eval(e1)
-      val v2 = eval(e2)
+      val v1 = eval(env, e1)
+      val v2 = eval(env, e2)
       v1 match {
-        case FunV(x, e)    => eval(subst(e, v2, x))
-        case RecV(f, x, e) => eval(subst(subst(e, v1, f), v2, x))
+        case FunV(x, e)    => eval(env, subst(e, v2, x))
+        case RecV(f, x, e) => eval(env, subst(subst(e, v1, f), v2, x))
         case _             => sys.error("eval: apply e1 not a function")
       }
-    case Let(x, e1, e2) => eval(subst(e2, eval(e1), x))
-    case Pair(e1, e2)   => PairV(eval(e1), eval(e2))
+    case Let(x, e1, e2) => eval(env, subst(e2, eval(env, e1), x))
+    case Pair(e1, e2)   => PairV(eval(env, e1), eval(env, e2))
     case First(e) =>
-      eval(e) match {
+      eval(env, e) match {
         case PairV(v1, v2) => v1
         case _             => sys.error("eval: First e not a pair")
       }
     case Second(e) =>
-      eval(e) match {
+      eval(env, e) match {
         case PairV(v1, v2) => v2
         case _             => sys.error("eval: Second e not a pair")
       }
-    case Record(es) => RecordV(es.map((l, e) => (l, eval(e))))
+    case Record(es) => RecordV(es.map((l, e) => (l, eval(env, e))))
     case Proj(e, l) =>
-      eval(e) match {
+      eval(env, e) match {
         case RecordV(es) => es(l)
         case _           => sys.error("eval: Proj e not a record")
       }
-    case Ref(e) => Cell(RefCell(eval(e)))
-    case Deref(e) =>
-      eval(e) match {
-        case Cell(r) => r.get
-        case _       => sys.error("eval: deref not a cell")
-      }
-    case Assign(e1, e2) =>
-      eval(e1) match {
-        case Cell(r) => r.set(eval(e2)); UnitV
-        case _       => sys.error("eval: assign not a cell")
-      }
+    // case Ref(e) => Cell(RefCell(eval(e)))
+    // case Deref(e) =>
+    //   eval(e) match {
+    //     case Cell(r) => r.get
+    //     case _       => sys.error("eval: deref not a cell")
+    //   }
+    // case Assign(e1, e2) =>
+    //   eval(e1) match {
+    //     case Cell(r) => r.set(eval(e2)); UnitV
+    //     case _       => sys.error("eval: assign not a cell")
+    //   }
     case Num(n)       => NumV(n)
     case Bool(b)      => BoolV(b)
     case Str(s)       => StringV(s)
@@ -416,8 +417,12 @@ object Eval {
   }
 }
 
-@main def test() = 
+@main def test() =
+  var env = ListMap.empty[Variable, Value]
+  println(Eval.eval(env, OneEquals(NumV(2.4), NumV(3))))
+@main def test() =
   println(Eval.eval(OneEquals(NumV(2.4), NumV(3))))
-  println(Eval.eval(TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
+  println(
+    Eval.eval(TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True)))
+  )
   println(Eval.eval(Let("😀😀", Num(3), Num(4))))
-

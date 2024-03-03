@@ -22,6 +22,20 @@ object Syntax {
   }
 
   // ======================================================================
+  // Statements
+  // ======================================================================
+  sealed abstract class Stmt
+
+  // Skip
+  case object Skip extends Stmt
+
+  case class Seq(s1: Stmt, s2: Stmt) extends Stmt
+  case class IfThenElseS(e: Expr, s1: Stmt, s2: Stmt) extends Stmt
+  case class Assign(x: Variable, e: Expr) extends Stmt
+
+  type Program = List[Stmt]
+
+  // ======================================================================
   // Expressions
   // ======================================================================
   sealed abstract class Expr
@@ -36,7 +50,7 @@ object Syntax {
   case class Times(e1: Expr, e2: Expr) extends Expr
   case class Divide(e1: Expr, e2: Expr) extends Expr
   case class Exponent(e1: Expr, e2: Expr) extends Expr
-  
+
   // Booleans
   case class Bool(b: BoolOptions) extends Expr
   case class OneEquals(e1: Expr, e2: Expr) extends Expr
@@ -69,10 +83,10 @@ object Syntax {
   case class Record(es: Field[Expr]) extends Expr
   case class Proj(e: Expr, l: Label) extends Expr
 
-  // References
-  case class Ref(e: Expr) extends Expr
-  case class Deref(e: Expr) extends Expr
-  case class Assign(e1: Expr, e2: Expr) extends Expr
+  // References - removed because they are replaced with statements?
+  // case class Ref(e: Expr) extends Expr
+  // case class Deref(e: Expr) extends Expr
+  // case class Assign(e1: Expr, e2: Expr) extends Expr
 
   // Syntactic sugars
   case class LetPair(x: Variable, y: Variable, e1: Expr, e2: Expr) extends Expr
