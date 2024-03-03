@@ -88,6 +88,10 @@ app.post('/typechecker', async (req, res) => {
   res.end(result.toString());
 });
 
-app.listen(PORT, () => {
+app.get('/test', (req, res) => {
+  res.end("Hello World");
+})
+
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is running on Port ${PORT}`)
 })

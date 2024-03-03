@@ -1,11 +1,10 @@
-FROM ubuntu:latest
+FROM node:latest
 
-RUN apt-get update && apt-get install -y npm nodejs
-RUN npm install -g dotenv @mistralai/mistralai express nodemon
-
+RUN mkdir /home/typechecker
+COPY . /home/typechecker 
+WORKDIR /home/typechecker
+RUN npm install
 EXPOSE 6969
 
-WORKDIR /home
-COPY ./entry.sh /.
-ENTRYPOINT ["/bin/bash", "/home/entry.sh"]
+ENTRYPOINT ["/bin/bash", "/home/typechecker/entry.sh"]
 CMD ["bash"]
