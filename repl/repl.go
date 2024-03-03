@@ -4,12 +4,30 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/gdamore/tcell"
 )
 
 var cliName string = "dreamREPL"
+
+var clear map[string]func() //create a map for storing clear funcs
+
+func init() {
+	clear = make(map[string]func())
+	clear["linux"] = func() {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+	clear["windows"] = func() {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Run()
+	}
+}
 
 // printPrompt displays the repl prompt at the start of each loop
 func printPrompt() {
@@ -29,6 +47,15 @@ func displayHelp() {
 	fmt.Print("exit    - Closes the terminal\r\n")
 	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
 	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
+}
+
+func clearScreen() {
+	clear_function, result := clear[runtime.GOOS]
+	if result {
+		clear_function()
+	} else {
+		panic("Unsupported OS!")
+	}
 }
 
 func readFile(filePath string) string {
@@ -75,10 +102,7 @@ func handleCommand(screen tcell.Screen, command string) {
 	if strings.EqualFold("help", text) {
 		displayHelp()
 	} else if strings.EqualFold("clear", text) {
-		// TODOLater - Why does this only work once?
-		screen.Clear()
-		screen.ShowCursor(0, 0)
-		screen.Show()
+		clearScreen()
 		printPrompt()
 	} else if strings.EqualFold("exit", text) {
 		// Close the program on the exit command
@@ -151,10 +175,7 @@ func main() {
 						screen.Fini()
 						os.Exit(0)
 					} else if event.Key() == tcell.KeyCtrlL {
-						// TODOLater - Why does CTRL+L only work once?
-						screen.Clear()
-						screen.ShowCursor(0, 0)
-						screen.Show()
+						clearScreen()
 						printPrompt()
 					} else {
 						input += string(event.Rune())
