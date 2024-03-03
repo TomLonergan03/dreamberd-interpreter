@@ -41,12 +41,16 @@ func printUnknown(text string) {
 
 // displayHelp informs the user about our hardcoded functions
 func displayHelp() {
+	fmt.Println()
 	fmt.Print("Welcome to ", cliName, "! These are the available commands: \r\n")
 	fmt.Print("help    - Show available commands\r\n")
 	fmt.Print("clear   - Clear the terminal screen\r\n")
 	fmt.Print("exit    - Closes the terminal\r\n")
 	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
 	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
+	fmt.Println()
+	fmt.Print("Note that multi-line inputs can be achieved using CTRL+SPACE, rather than SHIFT+ENTER\r\n")
+	fmt.Println()
 }
 
 func clearScreen() {
@@ -69,9 +73,7 @@ func readFile(filePath string) string {
 	if err != nil {
 		fmt.Print("Error: ", err, "\r\n")
 	}
-	str := string(content)
-	fmt.Println(str)
-	return str
+	return string(content)
 }
 
 func run(snippet string) {
@@ -145,17 +147,16 @@ func main() {
 				switch event := event.(type) {
 				case *tcell.EventKey:
 					if event.Key() == tcell.KeyEnter {
-						if event.Modifiers() == tcell.ModShift {
-							input += "\n"
-							fmt.Print("\r\n")
-						} else {
-							fmt.Print("\r\n")
-							handleCommand(screen, input)
-							input = ""
-							fmt.Print("\r")
-							printPrompt()
-							break
-						}
+						fmt.Print("\r\n")
+						handleCommand(screen, input)
+						input = ""
+						fmt.Print("\r")
+						printPrompt()
+						break
+					} else if event.Key() == tcell.KeyCtrlSpace {
+						// Detecting shift+enter not possible, so ctrl+space used instead
+						input += "\r\n"
+						fmt.Print("\r\n")
 					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
 						if len(input) > 0 {
 							input = input[:len(input)-1]
