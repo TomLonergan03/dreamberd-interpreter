@@ -34,13 +34,21 @@ object Syntax {
   case class Assign(x: Variable, e: Expr) extends Stmt
   case class Reverse() extends Stmt
 
-  case class Program(lines: List[Line])
-  case class Line(t: Stmt, p: Int)
+  case class Program(lines: List[Stmt])
 
   // ======================================================================
   // Expressions
   // ======================================================================
   sealed abstract class Expr
+
+  // Statements
+  // case object Skip extends Expr
+
+  // case class Delete(k: String) extends Expr
+  // case class Seq(s1: Expr, s2: Expr) extends Expr
+  // case class IfThenElseS(e: Expr, s1: Expr, s2: Expr) extends Expr
+  // case class Assign(x: Variable, e: Expr) extends Expr
+  // case class Reverse() extends Expr
 
   // Unit
   case object Unit extends Expr

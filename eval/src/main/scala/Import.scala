@@ -8,35 +8,97 @@ import DreamBerd.Syntax.Syntax._
 
 var example = """
 {
-  type: prog,
-  lines: [
+  "program": [
     {
-      tree: {
-        type: Add,
-        left: {
-          type: If,
-          condition: {
-            type: Boolean,
-            value: Maybe
+      "right": {
+        "var": "a",
+        "type": "lambda",
+        "body": {
+          "left": {
+            "value": "a",
+            "type": "variable"
           },
-          then: {
-            type: Num,
-            value: 1
+          "operator": "+",
+          "right": {
+            "type": "variable",
+            "value": "a"
           },
-          else: {
-            type: Num,
-            value: 2
-          }
-        },
-        right: {
-          type: Num,
-          value: 3
+          "type": "binary"
         }
+      },
+      "type": "assign",
+      "operator": "=",
+      "left": {
+        "value": "sum",
+        "type": "variable"
+      }
+    },
+    {
+      "args": [
+        {
+          "value": "1",
+          "type": "number"
+        },
+        {
+          "value": "2",
+          "type": "number"
+        }
+      ],
+      "func": {
+        "type": "variable",
+        "value": "sum"
+      },
+      "type": "call"
+    },
+    {
+      "type": "keyword",
+      "value": "reverse"
+    },
+    {
+      "cond": {
+        "body": {
+          "type": "bool",
+          "value": "maybe"
+        },
+        "type": "not"
+      },
+      "then": {
+        "type": "number",
+        "value": "1"
+      },
+      "type": "if",
+      "else": {
+        "type": "number",
+        "value": "2"
       }
     }
-  ]
+  ],
+  "type": "program"
 }
 """
+
+implicit val decodeProgram: Decoder[Program] = new Decoder[Program] {
+  final def apply(c: HCursor): Decoder.Result[Program] =
+    for {
+      lines <- c.downField("program").as[List[Stmt]]
+    } yield {
+      new Program(lines)
+    }
+}
+
+implicit val decodeStmt: Decoder[Stmt] = new Decoder[Stmt] {
+  final def apply(c: HCursor): Decoder.Result[Stmt] =
+    for {
+      t <- c.downField("type").as[String]
+      s <- t match {
+        case "Skip"   => Right(Skip)
+        case "Seq"    => c.as[Seq]
+        case "if"     => c.as[IfThenElseS]
+        case "assign" => c.as[Assign]
+        case _        => Left(DecodingFailure("Stmt", c.history))
+      }
+    } yield s
+}
 
 implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
   final def apply(c: HCursor): Decoder.Result[Expr] =
@@ -45,7 +107,7 @@ implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
       e <- t match {
         case "Unit"        => Right(Unit)
         case "Num"         => c.as[Num]
-        case "Plus"        => c.as[Plus]
+        case "Add"         => c.as[Plus]
         case "Minus"       => c.as[Minus]
         case "Times"       => c.as[Times]
         case "Divide"      => c.as[Divide]
@@ -59,8 +121,8 @@ implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
         case "Length"      => c.as[Length]
         case "Index"       => c.as[Index]
         case "Concat"      => c.as[Concat]
-        case "Var"         => c.as[Var]
-        case "Lambda"      => c.as[Lambda]
+        case "variable"    => c.as[Var]
+        case "lambda"      => c.as[Lambda]
         case "Rec"         => c.as[Rec]
         case "Pair"        => c.as[Pair]
         case "First"       => c.as[First]
@@ -70,40 +132,6 @@ implicit val decodeExpr: Decoder[Expr] = new Decoder[Expr] {
         case _             => Left(DecodingFailure("Expr", c.history))
       }
     } yield e
-}
-
-implicit val decodeProgram: Decoder[Program] = new Decoder[Program] {
-  final def apply(c: HCursor): Decoder.Result[Program] =
-    for {
-      `type` <- c.downField("type").as[String]
-      lines <- c.downField("lines").as[List[Line]]
-    } yield {
-      new Program(lines)
-    }
-}
-
-implicit val decodeLine: Decoder[Line] = new Decoder[Line] {
-  final def apply(c: HCursor): Decoder.Result[Line] =
-    for {
-      tree <- c.downField("tree").as[Stmt]
-      priority <- c.downField("priority").as[Int]
-    } yield {
-      new Line(tree, priority)
-    }
-}
-
-implicit val decodeStmt: Decoder[Stmt] = new Decoder[Stmt] {
-  final def apply(c: HCursor): Decoder.Result[Stmt] =
-    for {
-      t <- c.downField("type").as[String]
-      s <- t match {
-        case "Skip"        => Right(Skip)
-        case "Seq"         => c.as[Seq]
-        case "IfThenElseS" => c.as[IfThenElseS]
-        case "Assign"      => c.as[Assign]
-        case _             => Left(DecodingFailure("Stmt", c.history))
-      }
-    } yield s
 }
 
 implicit val decodeSeq: Decoder[Seq] = new Decoder[Seq] {
@@ -129,12 +157,23 @@ implicit val decodeIfThenElseS: Decoder[IfThenElseS] =
   }
 
 implicit val decodeAssign: Decoder[Assign] = new Decoder[Assign] {
+  println("decodeAssign")
   final def apply(c: HCursor): Decoder.Result[Assign] =
     for {
-      x <- c.downField("x").as[Variable]
-      e <- c.downField("e").as[Expr]
+      x <- c.downField("left").as[Variable]
+      e <- c.downField("right").as[Expr]
     } yield {
       new Assign(x, e)
+    }
+}
+
+implicit val decodeVariable: Decoder[Variable] = new Decoder[Variable] {
+  println("decodeVariable")
+  final def apply(c: HCursor): Decoder.Result[Variable] =
+    for {
+      x <- c.downField("value").as[String]
+    } yield {
+      new Variable(x)
     }
 }
 
@@ -305,7 +344,7 @@ implicit val decodeConcat: Decoder[Concat] = new Decoder[Concat] {
 implicit val decodeVar: Decoder[Var] = new Decoder[Var] {
   final def apply(c: HCursor): Decoder.Result[Var] =
     for {
-      x <- c.downField("value").as[String]
+      x <- c.get[String]("value")
     } yield {
       new Var(x)
     }
@@ -314,7 +353,7 @@ implicit val decodeVar: Decoder[Var] = new Decoder[Var] {
 implicit val decodeLambda: Decoder[Lambda] = new Decoder[Lambda] {
   final def apply(c: HCursor): Decoder.Result[Lambda] =
     for {
-      x <- c.downField("variable").as[String]
+      x <- c.downField("vars").as[String]
       e <- c.downField("body").as[Expr]
     } yield {
       new Lambda(x, e)
