@@ -37,6 +37,7 @@ object Eval {
         case Str(s)         => Str(s)
         case Length(e)      => Length(go(e))
         case Index(e1, e2)  => Index(go(e1), go(e2))
+        case IndexTo(e1, e2, e3)  => IndexTo(go(e1), go(e2), go(e3))
         case Concat(e1, e2) => Concat(go(e1), go(e2))
 
         case Var(x)         => Var(swapVar(x, y, z))
@@ -94,6 +95,7 @@ object Eval {
         case Str(s)         => Str(s)
         case Length(t0)     => Length(apply(theta, t0))
         case Index(t1, t2)  => Index(apply(theta, t1), apply(theta, t2))
+        case IndexTo(t1, t2, t3)  => IndexTo(apply(theta, t1), apply(theta, t2), apply(theta, t2))
         case Concat(t1, t2) => Concat(apply(theta, t1), apply(theta, t2))
 
         // case Let(y, t1, t2) => {
@@ -296,15 +298,38 @@ object Eval {
 
     def length(v: Value): Value = v match
       case StringV(v1) => NumV(v1.length)
-      case _           => sys.error("argument to length is not a string")
+      case NumV(v1)    => NumV(v1.toString.length)
+      case _           => sys.error("argument to length is not a string or a number")
 
     def index(v1: Value, v2: Value): Value = (v1, v2) match
       case (StringV(v1), NumV(v2)) =>
-        StringV(v1.charAt(Math.round(v2)).toString)
+        StringV(v1.charAt(Math.round(v2)+1).toString)
+      case (NumV(v1), NumV(v2)) => 
+        NumV(v1.toString.charAt(Math.round(v2)+1).toFloat)
+      case _ => sys.error("arguments to index are not valid")
+
+    def indexTo(v1: Value, v2: Value, index: Value): Value = (v1, v2, index) match
+      case (StringV(v1), StringV(v2), NumV(index)) =>
+        if (index.floor == index && index >= -1 && index < v1.length - 1 && v2.length == 1)
+          StringV(v1.updated(index.toInt+1, v2.charAt(0)))
+        else if (index >= -1 && index < v1.length)
+          val (before, after) = v1.splitAt(index.toInt+1)
+          StringV(before ++ v2 ++ after)
+        else
+          sys.error("Error in adding an index")
+      case (NumV(v1), NumV(v2), NumV(index)) => 
+        if ((index).floor == index && index >= -1 && index < (v1.toString).length() - 1 && (v2.toInt.toString).length() == 1)
+          NumV(v1.toString.updated(index.toInt+1, v2.toString.charAt(0)).toFloat)
+        else if (index >= -1 && index < (v1.toString).length() - 1 && (v2.toInt.toString).length() == 1)
+          val (before, after) = v1.toString.splitAt(index.toInt+1)
+          NumV((before ++ v2.toInt.toString ++ after).toFloat)
+        else
+          sys.error("Error in adding an index")
       case _ => sys.error("arguments to index are not valid")
 
     def concat(v1: Value, v2: Value): Value = (v1, v2) match
       case (StringV(v1), StringV(v2)) => StringV(v1 ++ v2)
+      case (NumV(v1), NumV(v2)) => NumV((v1.toString ++ v2.toString).toFloat)
       case _ => sys.error("arguments to concat are not strings")
   }
 
@@ -401,6 +426,12 @@ object Eval {
         Value.index(
           eval(env, deletedKeywords, when, e1),
           eval(env, deletedKeywords, when, e2)
+        )
+      case IndexTo(e1, e2, e3) =>
+        Value.indexTo(
+          eval(env, deletedKeywords, when, e1),
+          eval(env, deletedKeywords, when, e2),
+          eval(env, deletedKeywords, when, e3)
         )
       case Concat(e1, e2) =>
         Value.concat(
@@ -526,4 +557,5 @@ object Eval {
   println(Eval.eval(env, deletedKeywords, when, TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
   println(Eval.eval(env, deletedKeywords, when, Let("😀😀", PairV(NumV(3), NumV(3)), PairV(NumV(3), NumV(3)))))
   Eval.output(Eval.eval(env, deletedKeywords, when, PairV(NumV(3), NumV(3))))
+  Eval.output(Eval.eval(env, deletedKeywords, when, IndexTo(StringV("abcdef"), StringV("z"), NumV(-0.92))))
   
