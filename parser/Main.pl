@@ -25,7 +25,7 @@ my $ast = $parser->parse_toplevel();
 print Dumper($ast) . "\n";
 print to_json($ast) . "\n\n";
 
-my $path = "ast.json";
+my $path = "../ast.json";
 open my $fh, ">", $path or die "Can't open $path: $!";
 print $fh to_json($ast);
 close $fh;

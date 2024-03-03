@@ -12,8 +12,8 @@ import (
 )
 
 var cliName string = "dreamREPL"
-var temp_filepath string = "temp.txt"
-var script_filepath string = "./eval.sh"
+var temp_filepath string = "../command.berd"
+var script_filepath string = "../entry.sh"
 
 var clear map[string]func()     //create a map for storing clear functions
 var commands map[string]func()  //map for storing possible functions
