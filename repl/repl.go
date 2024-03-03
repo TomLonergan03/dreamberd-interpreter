@@ -35,6 +35,8 @@ func init() {
 	commands = make(map[string]func())
 	commands["help"] = displayHelp
 	commands["clear"] = clearScreen
+	commands["ls"] = listFiles
+	commands["pwd"] = printWorkingDirectory
 
 	backspace = make(map[string]func())
 	backspace["windows"] = func() {
@@ -56,12 +58,40 @@ func printUnknown(text string) {
 	fmt.Println(text, ": command not found")
 }
 
+func printWorkingDirectory() {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Print(dir, "\r\n")
+}
+
+func listFiles() {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	for _, file := range files {
+		fmt.Print(file.Name(), "\r\n")
+	}
+}
+
 func displayHelp() {
 	fmt.Println()
 	fmt.Print("Welcome to ", cliName, "! These are the available commands: \r\n")
 	fmt.Print("help    - Show available commands\r\n")
 	fmt.Print("clear   - Clear the terminal screen\r\n")
 	fmt.Print("exit    - Closes the terminal\r\n")
+	fmt.Print("ls    - List files in the working directory\r\n")
 	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
 	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
 	fmt.Println()
