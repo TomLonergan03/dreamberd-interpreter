@@ -8,3 +8,6 @@ hs_err_pid*
 .metals
 .vscode
 .scala-build
+.vscode
+.vstags
+ast.json
