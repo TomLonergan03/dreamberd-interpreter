@@ -123,9 +123,9 @@ func main() {
 					if event.Key() == tcell.KeyEnter {
 						if event.Modifiers() == tcell.ModShift {
 							input += "\n"
-							fmt.Print("\n\r")
+							fmt.Print("\r\n")
 						} else {
-							fmt.Print("\n\r")
+							fmt.Print("\r\n")
 							handleCommand(screen, input)
 							input = ""
 							fmt.Print("\r")
