@@ -11,6 +11,13 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+// ANSI escape codes for text color
+const (
+	colorReset  = "\033[0m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+)
+
 var cliName string = "dreamREPL"
 var temp_filepath string = "temp.txt"
 var script_filepath string = "./eval.sh"
@@ -81,7 +88,19 @@ func listFiles() {
 	}
 
 	for _, file := range files {
-		fmt.Print(file.Name(), "\r\n")
+		name := file.Name()
+		if file.IsDir() {
+			fmt.Printf("%s%s%s\r\n", colorGreen, name, colorReset)
+		} else {
+			fmt.Print(name, "\r\n")
+		}
+	}
+}
+
+func changeDirectory(dir string) {
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Println("Error changing directory:", err)
 	}
 }
 
@@ -92,6 +111,8 @@ func displayHelp() {
 	fmt.Print("clear   - Clear the terminal screen\r\n")
 	fmt.Print("exit    - Closes the terminal\r\n")
 	fmt.Print("ls    - List files in the working directory\r\n")
+	fmt.Print("pwd    - Print the full working directory\r\n")
+	fmt.Print("cd [path]    - Change the current working directory to the path specified\r\n")
 	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
 	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
 	fmt.Println()
@@ -186,6 +207,9 @@ func handleCommand(screen tcell.Screen, command string) {
 		snippet := strings.TrimPrefix(command, "run(")
 		snippet = strings.TrimSuffix(snippet, ")")
 		run(snippet)
+	} else if strings.HasPrefix(command, "cd ") {
+		directory := strings.TrimPrefix(command, "cd ")
+		changeDirectory(directory)
 	} else {
 		// Pass the command to the parser
 		handleInvalidCmd(command)
