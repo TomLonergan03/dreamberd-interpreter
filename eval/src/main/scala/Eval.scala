@@ -23,13 +23,13 @@ object Eval {
         case Minus(e1, e2)  => Minus(go(e1), go(e2))
         case Times(e1, e2)  => Times(go(e1), go(e2))
         case Divide(e1, e2) => Divide(go(e1), go(e2))
-
-        //case TwoEquals(e1, e2) => TwoEquals(go(e1), go(e2))
-        //case FourEquals(e1, e2) => FourEquals(go(e1), go(e2))
+        case Exponent(e1, e2) => Exponent(go(e1), go(e2))
         
         case Bool(b)               => Bool(b)
         case OneEquals(e1, e2) => OneEquals(go(e1), go(e2))
+        case TwoEquals(e1, e2) => TwoEquals(go(e1), go(e2))
         case ThreeEquals(e1, e2)   => ThreeEquals(go(e1), go(e2))
+        case FourEquals(e1, e2)   => FourEquals(go(e1), go(e2))
         case IfThenElse(e, e1, e2) => IfThenElse(go(e), go(e1), go(e2))
 
         case Str(s)         => Str(s)
@@ -75,15 +75,14 @@ object Eval {
         case Minus(t1, t2) => Minus(apply(theta, t1), apply(theta, t2))
         case Times(t1, t2) => Times(apply(theta, t1), apply(theta, t2))
         case Divide(t1, t2) => Divide(apply(theta, t1), apply(theta, t2))
-        
-        //case TwoEquals(t1, t2) => TwoEquals(apply(theta, t1), apply(theta, t2))
-        //case ThreeEquals(t1, t2) => ThreeEquals(apply(theta, t1), apply(theta, t2))
-        //case FourEquals(t1, t2) => FourEquals(apply(theta, t1), apply(theta, t2))
-        
+        case Exponent(t1, t2) => Exponent(apply(theta, t1), apply(theta, t2))
+         
         // Booleans
         case Bool(b)    => Bool(b)
         case OneEquals(t1, t2) => OneEquals(apply(theta, t1), apply(theta, t2))
+        case TwoEquals(t1, t2) => TwoEquals(apply(theta, t1), apply(theta, t2))
         case ThreeEquals(t1, t2) => ThreeEquals(apply(theta, t1), apply(theta, t2))
+        case FourEquals(t1, t2) => FourEquals(apply(theta, t1), apply(theta, t2))
         case IfThenElse(t0, t1, t2) =>
           IfThenElse(apply(theta, t0), apply(theta, t1), apply(theta, t2))
 
@@ -195,7 +194,11 @@ object Eval {
       case (NumV(v1), NumV(v2)) => NumV(v1 / v2)
       case _ => sys.error("arguments to multiplication are non-numeric")
 
-    def OneEquals(v1: Value, v2: Value): Value = (v1, v2) match
+    def exponent(v1: Value, v2: Value): Value = (v1, v2) match
+      case (NumV(v1), NumV(v2)) => NumV(Math.pow(v1, v2).toFloat)
+      case _ => sys.error("arguments to exponentiation are non-numeric")
+
+    def oneEquals(v1: Value, v2: Value): Value = (v1, v2) match
       case (NumV(v1), NumV(v2))       => 
         if (Math.round(v1) == Math.round(v2))
           BoolV(BoolOptions.True)
@@ -209,7 +212,7 @@ object Eval {
         else
           BoolV(BoolOptions.False)
       case (StringV(v1), StringV(v2)) => 
-        if (v1.equals(v2))
+        if (v1.charAt(0).equals(v2.charAt(0)))
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
@@ -225,13 +228,48 @@ object Eval {
             BoolV(BoolOptions.False)
       case _ => sys.error("arguments to = are not base types " + v1 + " " + v2)
     
-    /*case OneEquals(e1, e2) => OneEquals(go(e1), go(e2))
-            case TwoEquals(e1, e2) => TwoEquals(go(e1), go(e2))
-            case ThreeEquals(e1, e2) => ThreeEquals(go(e1), go(e2))
-            case FourEquals(e1, e2) => FourEquals(go(e1), go(e2))*/
+    def twoEquals(v1: Value, v2: Value): Value = (v1, v2) match
+      case (NumV(v1), NumV(v2))       => 
+        if (v1 == v2)
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (BoolV(BoolOptions.Maybe), BoolV(v2))  => 
+        val rand = new scala.util.Random
+        if (rand.nextFloat() > 0.5)
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (BoolV(v1), BoolV(BoolOptions.Maybe))  => 
+        val rand = new scala.util.Random
+        if (rand.nextFloat() > 0.5)
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (BoolV(v1), BoolV(v2))     => 
+        if (v1 == v2)
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (StringV(v1), StringV(v2)) => 
+        if (v1.equals(v2))
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (NumV(v1), StringV(v2)) => 
+        if (v1.toString().equals(v2))
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case (StringV(v1), NumV(v2)) => 
+        if (v2.toString().equals(v1))
+          BoolV(BoolOptions.True)
+        else
+          BoolV(BoolOptions.False)
+      case _ => sys.error("arguments to == are not base types " + v1 + " " + v2)
       
     
-    def ThreeEquals(v1: Value, v2: Value): Value = (v1, v2) match
+    def threeEquals(v1: Value, v2: Value): Value = (v1, v2) match
       case (NumV(v1), NumV(v2))       => 
         if (v1 == v2)
           BoolV(BoolOptions.True)
@@ -247,7 +285,10 @@ object Eval {
           BoolV(BoolOptions.True)
         else
           BoolV(BoolOptions.False)
-      case _ => sys.error("arguments to = are not base types " + v1 + " " + v2)
+      case _ => sys.error("arguments to === are not base types " + v1 + " " + v2)
+
+    def fourEquals(v1: Value, v2: Value): Value = (v1, v2) match
+      case _ => BoolV(BoolOptions.False)
 
     def length(v: Value): Value = v match
       case StringV(v1) => NumV(v1.length)
@@ -275,10 +316,13 @@ object Eval {
     case Minus(e1, e2) => Value.subtract(eval(e1), eval(e2))
     case Times(e1, e2) => Value.multiply(eval(e1), eval(e2))
     case Divide(e1, e2) => Value.divide(eval(e1), eval(e2))
+    case Exponent(e1, e2) => Value.exponent(eval(e1), eval(e2))
     case IfThenElse(e, e1, e2) =>
       if eval(e) == BoolV(BoolOptions.True) then eval(e1) else eval(e2)
-    case OneEquals(e1, e2)     => Value.OneEquals(eval(e1), eval(e2))
-    case ThreeEquals(e1, e2)   => Value.ThreeEquals(eval(e1), eval(e2))
+    case OneEquals(e1, e2)     => Value.oneEquals(eval(e1), eval(e2))
+    case TwoEquals(e1, e2)     => Value.twoEquals(eval(e1), eval(e2))
+    case ThreeEquals(e1, e2)   => Value.threeEquals(eval(e1), eval(e2))
+    case FourEquals(e1, e2)   => Value.fourEquals(eval(e1), eval(e2))
     case Length(e)      => Value.length(eval(e))
     case Index(e1, e2)  => Value.index(eval(e1), eval(e2))
     case Concat(e1, e2) => Value.concat(eval(e1), eval(e2))
@@ -374,4 +418,6 @@ object Eval {
 
 @main def test() = 
   println(Eval.eval(OneEquals(NumV(2.4), NumV(3))))
+  println(Eval.eval(TwoEquals(BoolV(BoolOptions.Maybe), BoolV(BoolOptions.True))))
+  println(Eval.eval(Let("😀😀", Num(3), Num(4))))
 

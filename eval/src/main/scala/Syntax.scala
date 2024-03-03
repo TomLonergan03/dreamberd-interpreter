@@ -35,11 +35,14 @@ object Syntax {
   case class Minus(e1: Expr, e2: Expr) extends Expr
   case class Times(e1: Expr, e2: Expr) extends Expr
   case class Divide(e1: Expr, e2: Expr) extends Expr
+  case class Exponent(e1: Expr, e2: Expr) extends Expr
   
   // Booleans
   case class Bool(b: BoolOptions) extends Expr
   case class OneEquals(e1: Expr, e2: Expr) extends Expr
+  case class TwoEquals(e1: Expr, e2: Expr) extends Expr
   case class ThreeEquals(e1: Expr, e2: Expr) extends Expr
+  case class FourEquals(e1: Expr, e2: Expr) extends Expr
   case class IfThenElse(e: Expr, e1: Expr, e2: Expr) extends Expr
 
   // Strings
