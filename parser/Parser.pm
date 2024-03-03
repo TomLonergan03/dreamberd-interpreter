@@ -5,9 +5,6 @@ use warnings;
 
 use utf8;
 use JSON;
-use Data::Dumper;
-
-$Data::Dumper::Indent = 1;
 
 my $PRECEDENCE = {
     "=" => 1,

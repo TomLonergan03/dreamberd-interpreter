@@ -9,10 +9,11 @@ We use state of the art typechecking, using AI inference to detect whether your 
 ### Dependencies
 - `npm`
 - `perl`
+- `perl-json`
 
 Required `npm` packages:
 - `@mistralai/mistralai`
 - `dotenv`
 
 ### Running
-Launch the Powerful AST Representation Sythesis Extra-Rapid™ (P.A.R.S.E™) microservice with `./Main.pl` while in `/parser`
+Launch the Powerful AST Representation Sythesis Extra-Rapid™ (P.A.R.S.E™) microservice with `./Main.pl path/to/code.db` while in `/parser`. Your AST will be produced in `ast.json`
