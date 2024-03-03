@@ -98,6 +98,7 @@ object Syntax {
   // Values
   abstract class Value extends Expr
   case object UnitV extends Value
+  case object UndefinedV extends Value
   case class NumV(n: Float) extends Value
   case class BoolV(b: BoolOptions) extends Value
   case class StringV(s: String) extends Value
