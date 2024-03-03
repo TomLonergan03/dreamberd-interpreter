@@ -157,19 +157,16 @@ func main() {
 							break
 						}
 					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
-						// TODOLater - Why does this not work?
 						if len(input) > 0 {
 							input = input[:len(input)-1]
-							screen.Clear()
-
-							// Set the default style
-							style := tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack)
-
-							// Display the updated input string
-							for i, char := range input {
-								screen.SetContent(i+1, 1, char, nil, style)
+							if runtime.GOOS == "windows" {
+								cmd := exec.Command("cmd", "/c", "cls")
+								cmd.Stdout = os.Stdout
+								cmd.Run()
+							} else {
+								// Move cursor back, print a space, move cursor back again
+								fmt.Print("\b \b")
 							}
-							screen.Show()
 						}
 					} else if event.Key() == tcell.KeyCtrlC {
 						screen.Fini()
@@ -177,6 +174,7 @@ func main() {
 					} else if event.Key() == tcell.KeyCtrlL {
 						clearScreen()
 						printPrompt()
+						fmt.Print(input)
 					} else {
 						input += string(event.Rune())
 						fmt.Print(string(event.Rune()))
