@@ -158,7 +158,7 @@ object Syntax {
   type Subst[A] = ListMap[Variable, A]
   object Subst {
     def empty[A]: Subst[A] = ListMap.empty[Variable, A]
-    def apply[A](pairs: (Variable, A)*): Subst[A] = ListMap(pairs: _*)
+    def apply[A](pairs: (Variable, A)*): Subst[A] = ListMap(pairs*)
   }
   // the empty substitution ι
   def iota[A]: Subst[A] = Subst.empty
