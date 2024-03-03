@@ -11,6 +11,17 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+// ANSI escape codes for text color
+const (
+	colorReset  = "\033[0m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+)
+
+const (
+	escapeNewLine = "\r\n"
+)
+
 var cliName string = "dreamREPL"
 var temp_filepath string = "../command.berd"
 var script_filepath string = "../entry.sh"
@@ -35,6 +46,8 @@ func init() {
 	commands = make(map[string]func())
 	commands["help"] = displayHelp
 	commands["clear"] = clearScreen
+	commands["ls"] = listFiles
+	commands["pwd"] = printWorkingDirectory
 
 	backspace = make(map[string]func())
 	backspace["windows"] = func() {
@@ -56,12 +69,54 @@ func printUnknown(text string) {
 	fmt.Println(text, ": command not found")
 }
 
+func printWorkingDirectory() {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Print(dir, escapeNewLine)
+}
+
+func listFiles() {
+	dir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+
+	for _, file := range files {
+		name := file.Name()
+		if file.IsDir() {
+			fmt.Printf("%s%s%s\r\n", colorGreen, name, colorReset)
+		} else {
+			fmt.Print(name, escapeNewLine)
+		}
+	}
+}
+
+func changeDirectory(dir string) {
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Print(err, escapeNewLine)
+	}
+}
+
 func displayHelp() {
 	fmt.Println()
 	fmt.Print("Welcome to ", cliName, "! These are the available commands: \r\n")
 	fmt.Print("help    - Show available commands\r\n")
 	fmt.Print("clear   - Clear the terminal screen\r\n")
 	fmt.Print("exit    - Closes the terminal\r\n")
+	fmt.Print("ls    - List files in the working directory\r\n")
+	fmt.Print("pwd    - Print the full working directory\r\n")
+	fmt.Print("cd [path]    - Change the current working directory to the path specified\r\n")
 	fmt.Print("read(file_path) - Read the file at file_path for DreamBerd interpretation\r\n")
 	fmt.Print("run(code_snippet) - Send code_snippet to the DreamBerd interpreter\r\n")
 	fmt.Println()
@@ -82,13 +137,13 @@ func clearScreen() {
 func readFile(filePath string) string {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Print("Error: ", err, "\r\n")
+		fmt.Print("Error: ", err, escapeNewLine)
 		return ""
 	}
 	defer file.Close()
 	content, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Print("Error: ", err, "\r\n")
+		fmt.Print("Error: ", err, escapeNewLine)
 	}
 	return string(content)
 }
@@ -110,7 +165,7 @@ func run(snippet string) {
 		return
 	}
 
-	fmt.Print("Now running: ", script_filepath, "\r\n")
+	fmt.Print("Now running: ", script_filepath, escapeNewLine)
 
 	// Arguments to be passed to the Bash script
 	scriptArguments := []string{temp_filepath}
@@ -125,7 +180,7 @@ func run(snippet string) {
 	// Run the command
 	e := cmd.Run()
 	if e != nil {
-		fmt.Print("Error executing script:", e, "\r\n")
+		fmt.Print("Error executing script:", e, escapeNewLine)
 		return
 	}
 }
@@ -156,6 +211,9 @@ func handleCommand(screen tcell.Screen, command string) {
 		snippet := strings.TrimPrefix(command, "run(")
 		snippet = strings.TrimSuffix(snippet, ")")
 		run(snippet)
+	} else if strings.HasPrefix(command, "cd ") {
+		directory := strings.TrimPrefix(command, "cd ")
+		changeDirectory(directory)
 	} else {
 		// Pass the command to the parser
 		handleInvalidCmd(command)
@@ -185,7 +243,7 @@ func main() {
 				switch event := event.(type) {
 				case *tcell.EventKey:
 					if event.Key() == tcell.KeyEnter {
-						fmt.Print("\r\n")
+						fmt.Print(escapeNewLine)
 						handleCommand(screen, input)
 						input = ""
 						fmt.Print("\r")
@@ -193,8 +251,8 @@ func main() {
 						break
 					} else if event.Key() == tcell.KeyCtrlSpace {
 						// Detecting shift+enter not possible, so ctrl+space used instead
-						input += "\r\n"
-						fmt.Print("\r\n")
+						input += escapeNewLine
+						fmt.Print(escapeNewLine)
 					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
 						if len(input) > 0 {
 							input = input[:len(input)-1]
