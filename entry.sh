@@ -8,8 +8,10 @@ do
 done
 
 cd ../typechecker/
-npm start --program=../$program --spec=../test.txt
-if [ $? -eq 0 ]; then
+$SPEC=${cat ../DreamBerdSpec.md}
+$SPEC=${perl -e "print join( q//, map { s/\\s+/_/g; lc } split /[^\\s\\w]+/, $SPEC )"}
+$TYPECHECKS=${curl -X POST -H "Content-Type: application/json" -d "{\"program\": \"$program\", \"spec\": \"$SPEC\"}" http://localhost:6969}
+if [ $TYPECHECKS == "true" ]; then
     echo "[>] Typecheck passed"
 else
     echo "[!] Typecheck failed"
@@ -25,3 +27,4 @@ else
     exit 1
 fi
 cd ..
+
