@@ -18,6 +18,10 @@ const (
 	colorYellow = "\033[33m"
 )
 
+const (
+	escapeNewLine = "\r\n"
+)
+
 var cliName string = "dreamREPL"
 var temp_filepath string = "temp.txt"
 var script_filepath string = "./eval.sh"
@@ -71,7 +75,7 @@ func printWorkingDirectory() {
 		fmt.Println("Error:", err)
 		return
 	}
-	fmt.Print(dir, "\r\n")
+	fmt.Print(dir, escapeNewLine)
 }
 
 func listFiles() {
@@ -92,7 +96,7 @@ func listFiles() {
 		if file.IsDir() {
 			fmt.Printf("%s%s%s\r\n", colorGreen, name, colorReset)
 		} else {
-			fmt.Print(name, "\r\n")
+			fmt.Print(name, escapeNewLine)
 		}
 	}
 }
@@ -100,7 +104,7 @@ func listFiles() {
 func changeDirectory(dir string) {
 	err := os.Chdir(dir)
 	if err != nil {
-		fmt.Println("Error changing directory:", err)
+		fmt.Print(err, escapeNewLine)
 	}
 }
 
@@ -133,13 +137,13 @@ func clearScreen() {
 func readFile(filePath string) string {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Print("Error: ", err, "\r\n")
+		fmt.Print("Error: ", err, escapeNewLine)
 		return ""
 	}
 	defer file.Close()
 	content, err := io.ReadAll(file)
 	if err != nil {
-		fmt.Print("Error: ", err, "\r\n")
+		fmt.Print("Error: ", err, escapeNewLine)
 	}
 	return string(content)
 }
@@ -161,7 +165,7 @@ func run(snippet string) {
 		return
 	}
 
-	fmt.Print("Now running: ", script_filepath, "\r\n")
+	fmt.Print("Now running: ", script_filepath, escapeNewLine)
 
 	// Arguments to be passed to the Bash script
 	scriptArguments := []string{temp_filepath}
@@ -176,7 +180,7 @@ func run(snippet string) {
 	// Run the command
 	e := cmd.Run()
 	if e != nil {
-		fmt.Print("Error executing script:", e, "\r\n")
+		fmt.Print("Error executing script:", e, escapeNewLine)
 		return
 	}
 }
@@ -239,7 +243,7 @@ func main() {
 				switch event := event.(type) {
 				case *tcell.EventKey:
 					if event.Key() == tcell.KeyEnter {
-						fmt.Print("\r\n")
+						fmt.Print(escapeNewLine)
 						handleCommand(screen, input)
 						input = ""
 						fmt.Print("\r")
@@ -247,8 +251,8 @@ func main() {
 						break
 					} else if event.Key() == tcell.KeyCtrlSpace {
 						// Detecting shift+enter not possible, so ctrl+space used instead
-						input += "\r\n"
-						fmt.Print("\r\n")
+						input += escapeNewLine
+						fmt.Print(escapeNewLine)
 					} else if event.Key() == tcell.KeyBackspace || event.Key() == tcell.KeyBackspace2 {
 						if len(input) > 0 {
 							input = input[:len(input)-1]
